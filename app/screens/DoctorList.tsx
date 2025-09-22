@@ -2,16 +2,16 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
-    FlatList,
-    Image,
-    ImageSourcePropType,
-    Linking,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  FlatList,
+  Image,
+  ImageSourcePropType,
+  Linking,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 // Doctor type
@@ -89,7 +89,7 @@ const DoctorList = () => {
   return (
     <SafeAreaView style={styles.safeContainer}>
       <View style={styles.container}>
-        <Text style={styles.header}>Find Your Doctor 👨‍⚕</Text>
+        <Text style={styles.header}>Find Your Doctor </Text>
 
         {/* Search bar */}
         <TextInput
@@ -130,7 +130,7 @@ export default DoctorList;
 const styles = StyleSheet.create({
   safeContainer: { flex: 1, backgroundColor: "#fff" },
   container: { flex: 1, padding: 15, backgroundColor: "#fff" },
-  header: { fontSize: 22, fontWeight: "bold", marginBottom: 10 },
+  header: { fontSize: 26, fontWeight: "bold", marginBottom: 10 , color:"#63b0a3"},
   searchBar: { borderWidth: 1, borderColor: "#ddd", borderRadius: 10, padding: 12, marginBottom: 15, fontSize: 14 },
   grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", marginBottom: 5 },
   gridItem: { width: "30%", aspectRatio: 1, backgroundColor: "#f8f8f8", borderRadius: 12, justifyContent: "center", alignItems: "center", marginBottom: 12, elevation: 2 },
