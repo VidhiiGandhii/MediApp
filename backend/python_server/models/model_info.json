@@ -1,0 +1,11 @@
+{
+  "test_accuracy": 0.9009,
+  "validation_accuracy": 0.9351,
+  "training_accuracy": 0.9777,
+  "overfitting_gap": 0.0426,
+  "safety_features": [
+    "emergency_detection",
+    "confidence_thresholds",
+    "medical_disclaimers"
+  ]
+}
