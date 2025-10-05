@@ -30,6 +30,8 @@
     "expo-symbols": "~0.4.5",
     "expo-system-ui": "~5.0.11",
     "expo-web-browser": "~14.2.0",
+    "express": "^5.1.0",
+    "init": "^0.1.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-native": "0.79.5",
