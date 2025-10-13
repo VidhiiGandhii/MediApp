@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -9,11 +9,20 @@ import {
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from "react-native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import FallingTablets from "../../components/FallingTablets";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { SharedValue, useSharedValue } from "react-native-reanimated";
+import { API_URL } from "../../config/api";
 
-const TabletButton = ({ onPress, text }) => (
+type TabletButtonProps = {
+  onPress: () => void;
+  text: string;
+};
+
+const TabletButton: React.FC<TabletButtonProps> = ({ onPress, text }) => (
   <TouchableOpacity style={styles.button} onPress={onPress}>
     <MaterialCommunityIcons name="pill" size={24} color="#fff" style={{ marginRight: 10 }} />
     <Text style={styles.buttonText}>{text}</Text>
@@ -22,10 +31,76 @@ const TabletButton = ({ onPress, text }) => (
 
 export default function SignupScreen() {
   const router = useRouter();
+  const [name, setName] = useState<string>("");
+  const [username, setUsername] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+
+  const fallRate = useSharedValue<number>(2);
+  const clearTrigger = useSharedValue<boolean>(false);
+
+  const handleTextChange = (text: string): void => {
+    fallRate.value = Math.min(2 + text.length * 0.5, 20);
+  };
+
+  const handleSignup = async (): Promise<void> => {
+    if (!name || !username || !email || !password) {
+      Alert.alert("Error", "Please fill in all fields.");
+      return;
+    }
+
+    if (password.length < 6) {
+      Alert.alert("Error", "Password must be at least 6 characters long.");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      Alert.alert("Error", "Please enter a valid email address.");
+      return;
+    }
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5-second timeout
+      const response = await fetch(`${API_URL}/api/signup`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name, username, email, password }),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      const data: {
+        success?: boolean;
+        message?: string;
+        token?: string;
+        user?: { name: string; email: string; username: string };
+      } = await response.json();
+
+      if (response.ok && data.success) {
+        await AsyncStorage.setItem('userToken', data.token);
+        await AsyncStorage.setItem('userData', JSON.stringify(data.user));
+        clearTrigger.value = true;
+        setTimeout(() => {
+          router.replace("/(tabs)");
+        }, 800);
+      } else {
+        Alert.alert("Signup Failed", data.message || "An unknown error occurred.");
+      }
+    } catch (error) {
+      console.error("Signup failed:", error);
+      Alert.alert("Connection Error", error.name === 'AbortError'
+        ? "Request timed out. Please try again."
+        : "Could not connect to the server. Please try again.");
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-      <FallingTablets />
+      <FallingTablets fallRate={fallRate} clearTrigger={clearTrigger} />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
@@ -33,23 +108,58 @@ export default function SignupScreen() {
         <View style={styles.content}>
           <Text style={styles.title}>Create Account</Text>
           <Text style={styles.subtitle}>Start managing your health today.</Text>
+
           <TextInput
             style={styles.input}
             placeholder="Full Name"
             placeholderTextColor="#888"
+            value={name}
+            onChangeText={(text: string) => {
+              setName(text);
+              handleTextChange(text);
+            }}
+            autoCapitalize="words"
           />
+
+          <TextInput
+            style={styles.input}
+            placeholder="Username"
+            placeholderTextColor="#888"
+            value={username}
+            onChangeText={(text: string) => {
+              setUsername(text);
+              handleTextChange(text);
+            }}
+            autoCapitalize="none"
+          />
+
           <TextInput
             style={styles.input}
             placeholder="Email"
             placeholderTextColor="#888"
+            value={email}
+            onChangeText={(text: string) => {
+              setEmail(text);
+              handleTextChange(text);
+            }}
+            keyboardType="email-address"
+            autoCapitalize="none"
           />
+
           <TextInput
             style={styles.input}
             placeholder="Password"
             placeholderTextColor="#888"
+            value={password}
+            onChangeText={(text: string) => {
+              setPassword(text);
+              handleTextChange(text);
+            }}
             secureTextEntry
           />
-          <TabletButton text="Sign Up" onPress={() => router.replace("/(tabs)")} />
+
+          <TabletButton text="Sign Up" onPress={handleSignup} />
+
           <TouchableOpacity onPress={() => router.back()}>
             <Text style={styles.link}>Already have an account? Login</Text>
           </TouchableOpacity>

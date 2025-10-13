@@ -10,18 +10,12 @@ import {
   Platform,
   Alert,
 } from "react-native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import FallingTablets from "../../components/FallingTablets";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { SharedValue, useSharedValue } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-//
-// ✅ Typed props for TabletButton
-//
-type FallingTabletsProps = {
-  fallRate: SharedValue<number>;
-  clearTrigger: SharedValue<boolean>;
-};
+import { API_URL } from "../../config/api";
 
 type TabletButtonProps = {
   onPress: () => void;
@@ -35,9 +29,6 @@ const TabletButton: React.FC<TabletButtonProps> = ({ onPress, text }) => (
   </TouchableOpacity>
 );
 
-//
-// ✅ LoginScreen
-//
 export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState<string>("");
@@ -46,34 +37,39 @@ export default function LoginScreen() {
   const fallRate = useSharedValue<number>(2);
   const clearTrigger = useSharedValue<boolean>(false);
 
-  //
-  // ✅ Typed handler for text input
-  //
   const handleTextChange = (text: string): void => {
     fallRate.value = Math.min(2 + text.length * 0.5, 20);
   };
 
-  //
-  // ✅ Typed async submit handler
-  //
   const handleSubmit = async (): Promise<void> => {
     if (!email || !password) {
-      Alert.alert("Error", "Please enter both email and password.");
+      Alert.alert("Error", "Please enter both email/username and password.");
       return;
     }
 
     try {
-      const response = await fetch("http://192.168.1.7:3000/api/login", {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5-second timeout
+      const response = await fetch(`${API_URL}/api/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ email, password }),
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
 
-      const data: { success?: boolean; message?: string } = await response.json();
+      const data: {
+        success?: boolean;
+        message?: string;
+        token?: string;
+        user?: { name: string; email: string; username: string };
+      } = await response.json();
 
       if (response.ok && data.success) {
+        await AsyncStorage.setItem('userToken', data.token);
+        await AsyncStorage.setItem('userData', JSON.stringify(data.user));
         clearTrigger.value = true;
         setTimeout(() => {
           router.replace("/(tabs)");
@@ -83,7 +79,9 @@ export default function LoginScreen() {
       }
     } catch (error) {
       console.error("Login failed:", error);
-      Alert.alert("Connection Error", "Could not connect to the server. Please try again.");
+      Alert.alert("Connection Error", error.name === 'AbortError'
+        ? "Request timed out. Please try again."
+        : "Could not connect to the server. Please try again.");
     }
   };
 
@@ -101,14 +99,13 @@ export default function LoginScreen() {
 
           <TextInput
             style={styles.input}
-            placeholder="Email"
+            placeholder="Email or Username"
             placeholderTextColor="#888"
             onChangeText={(text: string) => {
               setEmail(text);
               handleTextChange(text + password);
             }}
             value={email}
-            keyboardType="email-address"
             autoCapitalize="none"
           />
 
@@ -135,9 +132,6 @@ export default function LoginScreen() {
   );
 }
 
-//
-// ✅ Styles
-//
 const styles = StyleSheet.create({
   container: {
     flex: 1,

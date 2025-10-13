@@ -35,7 +35,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="C:\Users\anshs\MediApp\backend\python_server\venv"
+VIRTUAL_ENV="D:\medapp\HealthApp\backend\python_server\venv"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"
