@@ -6,7 +6,7 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
+
   KeyboardAvoidingView,
   Platform,
   Alert,
@@ -16,6 +16,7 @@ import FallingTablets from "../../components/FallingTablets";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { SharedValue, useSharedValue } from "react-native-reanimated";
 import { API_URL } from "../../config/api";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type TabletButtonProps = {
   onPress: () => void;

@@ -1,7 +1,8 @@
 fastapi
 uvicorn[standard]
-scikit-learn>=1.0.0
+scikit-learn==1.6.1
 joblib>=1.1.0
 pandas>=1.3.0
 numpy>=1.21.0
+#venv\Scripts\activate
 #uvicorn main:app --host 0.0.0.0 --port 8000 --reload
