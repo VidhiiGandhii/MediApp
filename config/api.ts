@@ -7,6 +7,6 @@ export const PYTHON_API_URL = process.env.NODE_ENV === 'production'
   : 'http://localhost:8000'; // Local development
 export const API_URL = process.env.NODE_ENV === 'production'
   ? 'https://your-backend-url.com' // Replace with deployed URL
-  : 'http://192.168.1.4:3000'; // Local development
+  : 'http://192.168.1.10:3000'; // Local development
 
 

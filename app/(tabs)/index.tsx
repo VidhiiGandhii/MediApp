@@ -1,15 +1,15 @@
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import React from "react";
 import {
-  Dimensions,
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
   View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Dimensions,
+  ScrollView,
+  Image,
 } from "react-native";
+import { Ionicons, MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const { width } = Dimensions.get("window");
@@ -23,15 +23,18 @@ export default function HomeScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Image
-            source={{ uri: "" }}
+            source={{ uri: "https://randomuser.me/api/portraits/men/32.jpg" }}
             style={styles.avatar}
           />
           <View style={{ flex: 1, marginLeft: 10 }}>
             <Text style={styles.welcome}>Hi, Welcome Back</Text>
-            <Text style={styles.username}>Ansh</Text>
+            <Text style={styles.username}>Johny</Text>
           </View>
           <View style={styles.headerIcons}>
-            <TouchableOpacity style={styles.iconButton}onPress={() => router.push("/screens/setting")}>
+            <TouchableOpacity style={styles.iconButton}>
+              <Ionicons name="notifications-outline" size={22} color="#333" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.iconButton}>
               <Ionicons name="settings-outline" size={22} color="#333" />
             </TouchableOpacity>
           </View>
@@ -39,8 +42,17 @@ export default function HomeScreen() {
 
         {/* Quick Actions */}
         <View style={styles.quickActions}>
-
-
+          <TouchableOpacity
+            style={styles.quickItem}
+            onPress={() => router.push("/screens/DoctorList")}
+          >
+            <Ionicons name="medkit-outline" size={24} color="#4A90E2" />
+            <Text style={styles.quickLabel}>Doctors</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.quickItem}>
+            <MaterialIcons name="recent-actors" size={24} color="#FF5A5F" />
+            <Text style={styles.quickLabel}>Recents</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.searchBar}>
             <Ionicons name="search-outline" size={20} color="#666" />
             <Text style={styles.searchText}>Search</Text>
@@ -61,18 +73,18 @@ export default function HomeScreen() {
 
             <TouchableOpacity
               style={styles.card}
-              onPress={() => router.push("/screens/upload")}
+              onPress={() => router.push("/(tabs)/medicineTracker")}
             >
               <Ionicons name="document-text-outline" size={28} color="#27AE60" />
-              <Text style={styles.cardLabel}>Upload</Text>
+              <Text style={styles.cardLabel}>View Prescriptions</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.card}
-              onPress={() => router.push("/screens/DoctorList")}
+              onPress={() => router.push("/screens/healthTipsScreen")}
             >
-              <Ionicons name="medkit-outline" size={28} color="#FF5A5F" />
-              <Text style={styles.cardLabel}>Doctor List</Text>
+              <Ionicons name="heart-circle-outline" size={28} color="#FF5A5F" />
+              <Text style={styles.cardLabel}>Health Tips</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
