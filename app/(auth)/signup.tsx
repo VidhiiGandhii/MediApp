@@ -17,6 +17,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { SharedValue, useSharedValue } from "react-native-reanimated";
 import { API_URL } from "../../config/api";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuth } from '../contexts/AuthContext';
 
 type TabletButtonProps = {
   onPress: () => void;
@@ -32,6 +33,7 @@ const TabletButton: React.FC<TabletButtonProps> = ({ onPress, text }) => (
 
 export default function SignupScreen() {
   const router = useRouter();
+   const { login } = useAuth();
   const [name, setName] = useState<string>("");
   const [username, setUsername] = useState<string>("");
   const [email, setEmail] = useState<string>("");
@@ -60,30 +62,19 @@ export default function SignupScreen() {
       Alert.alert("Error", "Please enter a valid email address.");
       return;
     }
-
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5-second timeout
+try {
       const response = await fetch(`${API_URL}/api/signup`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, username, email, password }),
-        signal: controller.signal,
       });
-      clearTimeout(timeoutId);
 
-      const data: {
-        success?: boolean;
-        message?: string;
-        token?: string;
-        user?: { name: string; email: string; username: string };
-      } = await response.json();
+      const data = await response.json();
 
       if (response.ok && data.success) {
-        await AsyncStorage.setItem('userToken', data.token);
-        await AsyncStorage.setItem('userData', JSON.stringify(data.user));
+        // Use auth context to store user data
+        await login(data.token, data.user);
+        
         clearTrigger.value = true;
         setTimeout(() => {
           router.replace("/(tabs)");
@@ -93,11 +84,47 @@ export default function SignupScreen() {
       }
     } catch (error) {
       console.error("Signup failed:", error);
-      Alert.alert("Connection Error", error.name === 'AbortError'
-        ? "Request timed out. Please try again."
-        : "Could not connect to the server. Please try again.");
+      Alert.alert("Connection Error", "Could not connect to the server. Please try again.");
     }
   };
+
+  //   try {
+  //     const controller = new AbortController();
+  //     const timeoutId = setTimeout(() => controller.abort(), 5000); // 5-second timeout
+  //     const response = await fetch(`${API_URL}/api/signup`, {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({ name, username, email, password }),
+  //       signal: controller.signal,
+  //     });
+  //     clearTimeout(timeoutId);
+
+  //     const data: {
+  //       success?: boolean;
+  //       message?: string;
+  //       token?: string;
+  //       user?: { name: string; email: string; username: string };
+  //     } = await response.json();
+
+  //     if (response.ok && data.success) {
+  //       await AsyncStorage.setItem('userToken', data.token);
+  //       await AsyncStorage.setItem('userData', JSON.stringify(data.user));
+  //       clearTrigger.value = true;
+  //       setTimeout(() => {
+  //         router.replace("/(tabs)");
+  //       }, 800);
+  //     } else {
+  //       Alert.alert("Signup Failed", data.message || "An unknown error occurred.");
+  //     }
+  //   } catch (error) {
+  //     console.error("Signup failed:", error);
+  //     Alert.alert("Connection Error", error.name === 'AbortError'
+  //       ? "Request timed out. Please try again."
+  //       : "Could not connect to the server. Please try again.");
+  //   }
+  // };
 
   return (
     <SafeAreaView style={styles.container}>

@@ -17,25 +17,25 @@ const QUICK_ACTIONS = [
   {
     icon: "add-circle-outline" as const,
     label: "Add\nMedication",
-    route: "/medications/add" as const,
+    route: "medicineReminder/medications/add" as const,
     gradient: ["#63b0a3ff", "#44a192ff"] as [string, string],
   },
   {
     icon: "calendar-outline" as const,
     label: "Calendar\nView",
-    route: "/calendar" as const,
+    route: "medicineReminder/calendar" as const,
     gradient: ["#5992c2ff", "#3d6791ff"] as [string, string],
   },
   {
     icon: "time-outline" as const,
     label: "History\nLog",
-    route: "/history" as const,
+    route: "medicineReminder/history" as const,
     gradient: ["#bd7994ff", "#744256ff"] as [string, string],
   },
   {
     icon: "medical-outline" as const,
     label: "Refill\nTracker",
-    route: "/refills" as const,
+    route: "medicineReminder/refills" as const,
     gradient: ["#be745dff", "#74493cff"] as [string, string],
   },
 ];
@@ -48,7 +48,7 @@ const SAMPLE_MEDICATIONS = [
   { id: 5, name: "Aspirin", dosage: "100mg", time: "08:00 PM", completed: false },
 ];
 
-const FILTER_OPTIONS = [
+const FILTER_OPTIONS: { value: keyof typeof COMPLETION_DATA; label: string }[] = [
   { value: "day", label: "Today" },
   { value: "week", label: "This Week" },
   { value: "month", label: "This Month" },
@@ -64,7 +64,7 @@ const COMPLETION_DATA = {
 
 export default function MedicineTracker() {
   const router = useRouter();
-  const [selectedFilter, setSelectedFilter] = useState("day");
+  const [selectedFilter, setSelectedFilter] = useState<keyof typeof COMPLETION_DATA>("day");
   const [medications, setMedications] = useState(SAMPLE_MEDICATIONS);
   const [showFilterMenu, setShowFilterMenu] = useState(false);
 
@@ -195,7 +195,7 @@ export default function MedicineTracker() {
           <Text style={styles.sectionTitle}>Quick Actions</Text>
           <View style={styles.quickActionsGrid}>
             {QUICK_ACTIONS.map((action) => (
-              <Link href={action.route} key={action.label} asChild>
+              <Link href={action.route as any} key={action.label} asChild>
                 <TouchableOpacity style={styles.actionButton}>
                   <LinearGradient
                     colors={action.gradient}
@@ -278,7 +278,7 @@ export default function MedicineTracker() {
         </View>
 
         {/* Add Medication Button */}
-        <TouchableOpacity style={styles.addButton} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.addButton} activeOpacity={0.8}  onPress={() => router.push("/medicineReminder/medications/add")}>
           <LinearGradient
             colors={["#63b0a3ff", "#44a192ff"]}
             style={styles.addButtonGradient}

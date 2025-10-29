@@ -1,0 +1,100 @@
+name,quantity,expiry
+Paracetamol,120,2026-03-15
+Amoxicillin,60,2025-11-20
+Ciprofloxacin,40,2025-07-10
+Azithromycin,75,2026-01-30
+Metformin,150,2027-02-01
+Amlodipine,80,2026-06-18
+Atorvastatin,95,2026-09-12
+Losartan,65,2025-12-25
+Omeprazole,110,2026-08-05
+Pantoprazole,90,2025-10-01
+Levothyroxine,100,2026-12-12
+Insulin,50,2025-09-01
+Aspirin,140,2027-03-20
+Clopidogrel,55,2025-11-15
+Diclofenac,130,2026-04-22
+Ibuprofen,170,2027-05-12
+Naproxen,75,2026-03-01
+Cetirizine,200,2027-06-11
+Loratadine,95,2026-07-07
+Montelukast,70,2025-12-01
+Salbutamol,85,2025-08-10
+Budesonide,60,2026-01-05
+Fluticasone,45,2025-09-20
+Doxycycline,80,2026-02-14
+Tetracycline,55,2025-11-30
+Hydroxychloroquine,90,2026-10-10
+Prednisolone,65,2025-12-05
+Methylprednisolone,50,2026-05-18
+Hydrocortisone,70,2026-07-22
+Warfarin,45,2025-09-15
+Heparin,35,2025-08-01
+Enoxaparin,60,2025-12-30
+Rivaroxaban,55,2026-02-25
+Apixaban,50,2026-03-10
+Furosemide,85,2026-09-14
+Spironolactone,70,2026-06-01
+Hydrochlorothiazide,95,2026-11-02
+Metoprolol,110,2026-12-20
+Propranolol,90,2027-01-01
+Carvedilol,75,2026-10-15
+Bisoprolol,80,2026-04-10
+Gliclazide,65,2025-12-25
+Glimepiride,70,2026-06-30
+Pioglitazone,60,2026-09-01
+Sitagliptin,55,2026-02-05
+Vildagliptin,45,2025-11-12
+Linagliptin,50,2026-07-07
+Canagliflozin,40,2026-05-25
+Dapagliflozin,35,2025-09-18
+Empagliflozin,30,2026-12-01
+Iron Tablets,150,2027-04-01
+Folic Acid,120,2026-03-22
+Vitamin B12,90,2026-07-01
+Vitamin D3,130,2027-01-15
+Calcium Tablets,140,2027-02-18
+Zinc Tablets,100,2026-10-05
+ORS Sachets,200,2026-08-11
+ORS Solution,75,2025-12-31
+Rehydration Salts,60,2025-10-28
+Loperamide,80,2026-01-20
+Ondansetron,55,2025-08-30
+Domperidone,60,2026-05-05
+Rabeprazole,95,2026-11-18
+Ranitidine,40,2025-09-25
+Sucralfate,50,2025-12-20
+Clarithromycin,60,2026-03-30
+Erythromycin,55,2025-07-15
+Linezolid,45,2026-09-01
+Vancomycin,30,2025-08-15
+Meropenem,25,2025-09-01
+Imipenem,20,2025-11-05
+Ceftriaxone,50,2026-02-28
+Cefixime,70,2026-06-06
+Cefuroxime,55,2026-04-14
+Cefotaxime,45,2025-12-01
+Amphotericin B,15,2025-10-05
+Fluconazole,70,2026-01-11
+Itraconazole,60,2026-08-17
+Ketoconazole,50,2025-09-12
+Voriconazole,25,2025-08-28
+Terbinafine,40,2026-03-22
+Albendazole,85,2026-06-15
+Mebendazole,75,2026-09-01
+Praziquantel,30,2025-10-22
+Artemether-Lumefantrine,45,2026-01-19
+Chloroquine,60,2026-04-04
+Quinine,25,2025-11-25
+Remdesivir,20,2025-08-30
+Favipiravir,15,2025-07-20
+Oseltamivir,35,2025-12-05
+Zidovudine,30,2026-05-12
+Lamivudine,40,2026-06-08
+Tenofovir,35,2026-07-21
+Efavirenz,25,2026-01-31
+Dolutegravir,20,2026-02-14
+Raltegravir,15,2025-12-12
+Morphine,25,2025-09-09
+Tramadol,50,2026-01-07
+Codeine Syrup,35,2025-11-18

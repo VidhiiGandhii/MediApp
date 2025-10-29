@@ -16,6 +16,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { SharedValue, useSharedValue } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { API_URL } from "../../config/api";
+import { useAuth } from "../contexts/AuthContext";
 
 type TabletButtonProps = {
   onPress: () => void;
@@ -31,6 +32,7 @@ const TabletButton: React.FC<TabletButtonProps> = ({ onPress, text }) => (
 
 export default function LoginScreen() {
   const router = useRouter();
+   const { login } = useAuth();
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
 
@@ -41,6 +43,49 @@ export default function LoginScreen() {
     fallRate.value = Math.min(2 + text.length * 0.5, 20);
   };
 
+  // const handleSubmit = async (): Promise<void> => {
+  //   if (!email || !password) {
+  //     Alert.alert("Error", "Please enter both email/username and password.");
+  //     return;
+  //   }
+
+  //   try {
+  //     const controller = new AbortController();
+  //     const timeoutId = setTimeout(() => controller.abort(), 5000); // 5-second timeout
+  //     const response = await fetch(`${API_URL}/api/login`, {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({ email, password }),
+  //       signal: controller.signal,
+  //     });
+  //     clearTimeout(timeoutId);
+
+  //     const data: {
+  //       success?: boolean;
+  //       message?: string;
+  //       token?: string;
+  //       user?: { name: string; email: string; username: string };
+  //     } = await response.json();
+
+  //     if (response.ok && data.success) {
+  //       await AsyncStorage.setItem('userToken', data.token);
+  //       await AsyncStorage.setItem('userData', JSON.stringify(data.user));
+  //       clearTrigger.value = true;
+  //       setTimeout(() => {
+  //         router.replace("/(tabs)");
+  //       }, 800);
+  //     } else {
+  //       Alert.alert("Login Failed", data.message || "An unknown error occurred.");
+  //     }
+  //   } catch (error) {
+  //     console.error("Login failed:", error);
+  //     Alert.alert("Connection Error", error.name === 'AbortError'
+  //       ? "Request timed out. Please try again."
+  //       : "Could not connect to the server. Please try again.");
+  //   }
+  // };
   const handleSubmit = async (): Promise<void> => {
     if (!email || !password) {
       Alert.alert("Error", "Please enter both email/username and password.");
@@ -48,28 +93,18 @@ export default function LoginScreen() {
     }
 
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5-second timeout
       const response = await fetch(`${API_URL}/api/login`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
-        signal: controller.signal,
       });
-      clearTimeout(timeoutId);
 
-      const data: {
-        success?: boolean;
-        message?: string;
-        token?: string;
-        user?: { name: string; email: string; username: string };
-      } = await response.json();
+      const data = await response.json();
 
       if (response.ok && data.success) {
-        await AsyncStorage.setItem('userToken', data.token);
-        await AsyncStorage.setItem('userData', JSON.stringify(data.user));
+        // Use auth context to store user data
+        await login(data.token, data.user);
+        
         clearTrigger.value = true;
         setTimeout(() => {
           router.replace("/(tabs)");
@@ -79,9 +114,7 @@ export default function LoginScreen() {
       }
     } catch (error) {
       console.error("Login failed:", error);
-      Alert.alert("Connection Error", error.name === 'AbortError'
-        ? "Request timed out. Please try again."
-        : "Could not connect to the server. Please try again.");
+      Alert.alert("Connection Error", "Could not connect to the server. Please try again.");
     }
   };
 

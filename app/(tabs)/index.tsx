@@ -73,10 +73,10 @@ export default function HomeScreen() {
 
             <TouchableOpacity
               style={styles.card}
-              onPress={() => router.push("/(tabs)/medicineTracker")}
+              onPress={() => router.push("/screens/upload")}
             >
               <Ionicons name="document-text-outline" size={28} color="#27AE60" />
-              <Text style={styles.cardLabel}>View Prescriptions</Text>
+              <Text style={styles.cardLabel}>Upload</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -89,7 +89,7 @@ export default function HomeScreen() {
 
             <TouchableOpacity
               style={styles.card}
-              onPress={() => router.push("/(tabs)/FamilyScreen")}
+              onPress={() => router.push("/screens/FamilyScreen")}
             >
               <Ionicons name="people-outline" size={28} color="#9B51E0" />
               <Text style={styles.cardLabel}>View Family</Text>
