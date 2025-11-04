@@ -1,3 +1,4 @@
+// backend/routes/index.js
 const express = require('express');
 const router = express.Router();
 
@@ -8,14 +9,21 @@ const healthRoutes = require('./healthRoutes');
 const inventoryRoutes = require('./inventoryRoutes');
 const medicineRoutes = require('./medicineRoutes');
 const userMedicationRoutes = require('./userMedicationRoutes');
+const appointmentRoutes = require('./appointmentRoutes');
+const doctorRoutes = require('./doctorRoutes');
 
-// Mount all routes onto the main router
-// The path prefix (e.g., '/api') is handled in app.js
-router.use(authRoutes);
-router.use(documentRoutes);
-router.use(healthRoutes);
-router.use(inventoryRoutes);
-router.use(medicineRoutes);
-router.use(userMedicationRoutes);
+
+// Mount all routes onto the main router with their resource prefixes.
+// CRITICAL: The string argument specifies the base path for each router.
+// The final URL structure for appointments is: /api + /appointments
+router.use( authRoutes);
+router.use( documentRoutes);
+router.use( healthRoutes);
+router.use( inventoryRoutes);
+router.use( medicineRoutes);
+router.use( userMedicationRoutes);
+router.use( appointmentRoutes); // FIX: /appointments prefix add
+router.use(doctorRoutes);
+
 
 module.exports = router;

@@ -1,13 +1,28 @@
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as DocumentPicker from "expo-document-picker";
-import React, { useState } from "react";
-import { FlatList, StyleSheet, Text, TouchableOpacity, View, Alert } from "react-native";
+import * as Sharing from 'expo-sharing';
+import React, { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { Card } from "react-native-paper";
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
-import Ionicons from '@expo/vector-icons/Ionicons';
+import { API_URL } from "../../config/api";
+
+// --- NEW IMPORTS ---
+import * as FileSystem from 'expo-file-system/legacy';
+import * as WebBrowser from 'expo-web-browser';
+import { SafeAreaView } from "react-native-safe-area-context";
+// -------------------
 
 type FileItem = {
   id: string;
@@ -19,8 +34,8 @@ const categories = [
   // ... (categories array is unchanged) ...
   { id: "1", name: "Prescription", icon: <MaterialIcons name="medication" size={24} color="white" /> },
   { id: "2", name: "Report", icon: <MaterialIcons name="summarize" size={24} color="white" /> },
-  { id: "3", name: "Bill", icon: <FontAwesome5 name="file-invoice" size={24} color="white" /> },
-  { id: "4", name: "Other", icon: <Ionicons name="document-text" size={24} color="white" /> },
+  { id: "3", name: "Bill", icon: <FontAwesome5 name="file-invoice" size={24} color="white" />},
+  { id: "4", name: "Other", icon: <Ionicons name="document-text" size={24} color="white" />},
 ];
 
 const UploadScreen: React.FC = () => {
@@ -42,7 +57,7 @@ const UploadScreen: React.FC = () => {
         return;
       }
       const response = await fetch(`${API_URL}/api/documents`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}`},
       });
       if (!response.ok) {
         throw new Error("Failed to fetch documents");
@@ -98,7 +113,7 @@ const UploadScreen: React.FC = () => {
       }
 
       const data = await response.json();
-      setUploadedFiles((prev) => [...prev, data.document]);
+      setUploadedFiles((prev: any) => [...prev, data.document]);
       Alert.alert("Success", `${file.name} uploaded to ${category}`);
     } catch (error) {
       console.error("Upload error:", error);
@@ -146,7 +161,7 @@ const UploadScreen: React.FC = () => {
       if (!response.ok) {
         throw new Error("Failed to delete file");
       }
-      setUploadedFiles((prev) => prev.filter((file) => file.id !== fileId));
+      setUploadedFiles((prev: any[]) => prev.filter((file) => file.id !== fileId));
       Alert.alert("Success", "File removed");
     } catch (error) {
       console.error("Delete file error:", error);
@@ -213,9 +228,9 @@ const UploadScreen: React.FC = () => {
   // ------------------------------------
   // ------------------------------------
 
-  const renderCategory = ({ item }: { item: typeof categories[0] }) => (
-    <TouchableOpacity 
-      style={styles.categoryCard} 
+  const renderCategory = ({ item }: { item: (typeof categories)[0] }) => (
+    <TouchableOpacity
+      style={styles.categoryCard}
       onPress={() => handlePick(item.name)}
       disabled={uploading || isViewing} // --- MODIFIED ---
       activeOpacity={0.7}
@@ -225,36 +240,55 @@ const UploadScreen: React.FC = () => {
     </TouchableOpacity>
   );
 
-  const renderFile = ({ item, index }: { item: FileItem; index: number }) => (
-    <Card style={styles.fileCard}>
-      <Card.Content>
-        <View style={styles.fileContent}>
-          <View style={styles.fileInfo}>
-            <Text style={styles.fileCategory}>{item.category}</Text>
-            <Text style={styles.fileName} numberOfLines={2}>{item.name}</Text>
+  // --- MODIFIED: renderFile is now a TouchableOpacity ---
+  const renderFile = ({ item }: { item: FileItem }) => (
+    <TouchableOpacity 
+      onPress={() => handleViewFile(item)} 
+      disabled={isViewing}
+      activeOpacity={0.7}
+    >
+      <Card style={styles.fileCard}>
+        <Card.Content>
+          <View style={styles.fileContent}>
+            <View style={styles.fileInfo}>
+              <Text style={styles.fileCategory}>{item.category}</Text>
+              <Text style={styles.fileName} numberOfLines={2}>
+                {item.fileName}
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={() => handleRemoveFile(item.id)} // Pass the database ID
+            >
+              <MaterialIcons name="close" size={20} color="#d32f2f" />
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity 
-            style={styles.deleteButton}
-            onPress={() => handleRemoveFile(index)}
-          >
-            <MaterialIcons name="close" size={20} color="#d32f2f" />
-          </TouchableOpacity>
-        </View>
-      </Card.Content>
-    </Card>
+        </Card.Content>
+      </Card>
+    </TouchableOpacity>
   );
   // ------------------------------------------------------
 
   return (
-    
     <View style={styles.container}>
     <SafeAreaView>
       <Text style={styles.header}>Upload Documents</Text>
+      </SafeAreaView>
+
+      {/* --- NEW: Added loading indicator for viewing --- */}
+      {(uploading || isViewing) && (
+        <View style={styles.uploadingIndicator}>
+          <ActivityIndicator size="small" color="#63b0a3" />
+          <Text style={styles.uploadingText}>
+            {uploading ? "Uploading file..." : "Opening file..."}
+          </Text>
+        </View>
+      )}
 
       <FlatList
         // ... (FlatList props unchanged) ...
         data={categories}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item: { id: any; }) => item.id}
         renderItem={renderCategory}
         numColumns={2}
         columnWrapperStyle={styles.row}
@@ -264,7 +298,7 @@ const UploadScreen: React.FC = () => {
 
       <Text style={styles.subHeader}>
         Uploaded Files{" "}
-        {uploadedFiles.length > 0 && `(${uploadedFiles.length})`}
+        {uploadedFiles.length > 0 && (`${uploadedFiles.length}`)}
       </Text>
 
       {loading ? (
@@ -274,7 +308,7 @@ const UploadScreen: React.FC = () => {
       ) : (
         <FlatList
           data={uploadedFiles}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item: { id: any; }) => item.id}
           renderItem={renderFile} // --- MODIFIED (will use new renderFile) ---
           contentContainerStyle={styles.fileList}
         />
@@ -402,3 +436,7 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
   },
 });
+
+function setUploading(arg0: boolean) {
+  throw new Error("Function not implemented.");
+}

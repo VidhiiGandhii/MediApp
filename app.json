@@ -21,7 +21,6 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.vidhigandhi.HealthApp"
-    
     },
     "web": {
       "bundler": "metro",
@@ -38,7 +37,8 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
