@@ -1,12 +1,11 @@
 // contexts/AuthContext.tsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ActivityIndicator } from 'react-native';
-import { View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
 type User = {
-  _id: string;
+  id: string;
   name: string;
   email: string;
   username: string;
@@ -31,7 +30,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load user data on app start
   useEffect(() => {
     loadStoredAuth();
   }, []);
@@ -42,10 +40,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const storedUser = await AsyncStorage.getItem('userData');
 
       if (storedToken && storedUser) {
-        const userData = JSON.parse(storedUser);
+        const userData: User = JSON.parse(storedUser);
+
         setToken(storedToken);
         setUser(userData);
-        setUserId(userData._id);
+        setUserId(userData.id ?? null);
       }
     } catch (error) {
       console.error('Error loading auth data:', error);
@@ -56,13 +55,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (authToken: string, userData: User) => {
     try {
+      if (!authToken || !userData || !userData.id) {
+        console.error("Invalid login data:", { authToken, userData });
+        return;
+      }
+
       await AsyncStorage.setItem('userToken', authToken);
       await AsyncStorage.setItem('userData', JSON.stringify(userData));
-      await AsyncStorage.setItem('userId', userData._id);
+      await AsyncStorage.setItem('userId', userData.id.toString());
 
       setToken(authToken);
       setUser(userData);
-      setUserId(userData._id);
+      setUserId(userData.id.toString());
     } catch (error) {
       console.error('Error saving auth data:', error);
       throw error;
@@ -77,7 +81,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUserId(null);
     } catch (error) {
       console.error('Error clearing auth data:', error);
-      throw error;
     }
   };
 
@@ -87,7 +90,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(userData);
     } catch (error) {
       console.error('Error updating user data:', error);
-      throw error;
     }
   };
 
@@ -105,39 +107,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-// Custom hook to use auth context
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 };
 
-// HOC to protect routes
-export const withAuth = (Component: React.ComponentType<any>) => {
-  return (props: any) => {
-    const { isAuthenticated, isLoading } = useAuth();
-    const router = useRouter();
-
-    useEffect(() => {
-      if (!isLoading && !isAuthenticated) {
-        router.replace('/(auth)/login');
-      }
-    }, [isAuthenticated, isLoading]);
-
-    if (isLoading) {
-      return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator size="large" color="#63b0a3" />
-        </View>
-      );
-    }
-
-    if (!isAuthenticated) {
-      return null;
-    }
-
-    return <Component {...props} />;
-  };
-};
+// ✅ DEFAULT EXPORT (fixes Expo route warning)
+export default AuthProvider;
