@@ -13,6 +13,7 @@ const router = express.Router();
  * @desc    Get the list of all possible symptoms
  * @access  Public
  */
+// THIS IS THE PUBLIC ROUTE
 router.get('/symptoms', getSymptomList);
 
 /**
