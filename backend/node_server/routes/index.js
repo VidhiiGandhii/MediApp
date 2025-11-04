@@ -8,14 +8,19 @@ const healthRoutes = require('./healthRoutes');
 const inventoryRoutes = require('./inventoryRoutes');
 const medicineRoutes = require('./medicineRoutes');
 const userMedicationRoutes = require('./userMedicationRoutes');
+const doctorRoutes = require('./doctorRoutes');
+const appointmentRoutes = require('./appointmentRoutes');
 
 // Mount all routes onto the main router
-// The path prefix (e.g., '/api') is handled in app.js
 router.use(authRoutes);
 router.use(documentRoutes);
 router.use(healthRoutes);
 router.use(inventoryRoutes);
 router.use(medicineRoutes);
 router.use(userMedicationRoutes);
+router.use(doctorRoutes);
+router.use(appointmentRoutes);
+
+// NO authenticateToken middleware should be here
 
 module.exports = router;
