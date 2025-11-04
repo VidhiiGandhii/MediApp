@@ -31,7 +31,7 @@ export default function HomeScreen() {
             <Text style={styles.username}>Ansh</Text>
           </View>
           <View style={styles.headerIcons}>
-            <TouchableOpacity style={styles.iconButton}onPress={() => router.push("../screens/setting")}>
+            <TouchableOpacity style={styles.iconButton} onPress={() => router.push("../screens/settings")}>
               <Ionicons name="settings-outline" size={22} color="#333" />
             </TouchableOpacity>
           </View>
@@ -77,7 +77,7 @@ export default function HomeScreen() {
 
             <TouchableOpacity
               style={styles.card}
-              onPress={() => router.push("../(tabs)/FamilyScreen")}
+              onPress={() => router.push("/screens/FamilyScreen")}
             >
               <Ionicons name="people-outline" size={28} color="#9B51E0" />
               <Text style={styles.cardLabel}>View Family</Text>

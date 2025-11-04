@@ -1,10 +1,10 @@
-import * as DocumentPicker from "expo-document-picker";
-import React, { useState } from "react";
-import { FlatList, StyleSheet, Text, TouchableOpacity, View, Alert } from "react-native";
-import { Card } from "react-native-paper";
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import * as DocumentPicker from "expo-document-picker";
+import React, { useState } from "react";
+import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Card } from "react-native-paper";
 
 type FileItem = {
   name: string;
@@ -15,8 +15,8 @@ type FileItem = {
 const categories = [
   { id: "1", name: "Prescription", icon: <MaterialIcons name="medication" size={24} color="white" /> },
   { id: "2", name: "Report", icon: <MaterialIcons name="summarize" size={24} color="white" /> },
-  { id: "3", name: "Bill", icon: <FontAwesome5 name="file-invoice" size={24} color="white" />},
-  { id: "4", name: "Other", icon: <Ionicons name="document-text" size={24} color="white" />},
+  { id: "3", name: "Bill", icon: <FontAwesome5 name="file-invoice" size={24} color="white" /> },
+  { id: "4", name: "Other", icon: <Ionicons name="document-text" size={24} color="white" /> },
 ];
 
 const UploadScreen: React.FC = () => {
@@ -57,8 +57,8 @@ const UploadScreen: React.FC = () => {
   };
 
   const renderCategory = ({ item }: { item: typeof categories[0] }) => (
-    <TouchableOpacity 
-      style={styles.categoryCard} 
+    <TouchableOpacity
+      style={styles.categoryCard}
       onPress={() => handlePick(item.name)}
       disabled={loading}
       activeOpacity={0.7}
@@ -78,7 +78,7 @@ const UploadScreen: React.FC = () => {
             <Text style={styles.fileCategory}>{item.category}</Text>
             <Text style={styles.fileName} numberOfLines={2}>{item.name}</Text>
           </View>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.deleteButton}
             onPress={() => handleRemoveFile(index)}
           >
@@ -90,6 +90,7 @@ const UploadScreen: React.FC = () => {
   );
 
   return (
+
     <View style={styles.container}>
       <Text style={styles.header}>Upload Documents</Text>
 

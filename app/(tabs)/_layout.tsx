@@ -22,7 +22,7 @@
 //           ),
 //         }}
 //       />
-    
+
 //       <Tabs.Screen
 //         name="FamilyScreen"
 //         options={{
@@ -44,11 +44,10 @@
 //     </Tabs>
 //   );
 // }
-import { Tabs } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Tabs, useRouter } from 'expo-router';
+import { useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { useEffect, ComponentProps } from 'react';
-import { useRouter } from 'expo-router';
 
 export default function TabsLayout() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -90,30 +89,30 @@ export default function TabsLayout() {
           ),
         }}
       />
- <Tabs.Screen
-         name="appointmentScreen"
-         options={{
-           title: "Appointments",
-           tabBarIcon: ({ color, size }) => (
-             <Ionicons name="calendar-outline" size={size} color={color} />
-           ),
-         }}
-       />
+      <Tabs.Screen
+        name="appointmentScreen"
+        options={{
+          title: "Appointments",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="calendar-outline" size={size} color={color} />
+          ),
+        }}
+      />
       <Tabs.Screen
         name="medicineTracker"
         options={{
           title: 'Medications',
           tabBarIcon: ({ color, focused }) => (
             <MaterialCommunityIcons
-              name={('pill') }
+              name={('pill')}
               size={28}
               color={color}
             />
           ),
         }}
       />
-      
- {/* <Tabs.Screen
+
+      {/* <Tabs.Screen
         name="medicineTracker"
          options={{
            title: "Medicines",
@@ -150,19 +149,19 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-  name="inventory"
-  options={{
-    title: 'Inventory',
-    tabBarIcon: ({ color, focused }) => (
-      <MaterialCommunityIcons 
-        name={focused ? 'package-variant' : 'package-variant-closed'} 
-        size={28} 
-        color={color} 
+        name="inventory"
+        options={{
+          title: 'Inventory',
+          tabBarIcon: ({ color, focused }) => (
+            <MaterialCommunityIcons
+              name={focused ? 'package-variant' : 'package-variant-closed'}
+              size={28}
+              color={color}
+            />
+          ),
+        }}
       />
-    ),
-  }}
-/>
     </Tabs>
-    
+
   );
 }
