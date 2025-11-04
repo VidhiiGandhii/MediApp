@@ -1,6 +1,9 @@
 // contexts/AuthContext.tsx
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import { ActivityIndicator } from 'react-native';
+import { View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { createContext, useState, useEffect, useContext } from 'react';
 
 type User = {
   id: string;
@@ -111,5 +114,30 @@ export const useAuth = (): AuthContextType => {
   return context;
 };
 
-// ✅ DEFAULT EXPORT (fixes Expo route warning)
-export default AuthProvider;
+// HOC to protect routes
+export const withAuth = (Component: React.ComponentType<any>) => {
+  return (props: any) => {
+    const { isAuthenticated, isLoading } = useAuth();
+    const router = useRouter();
+
+    useEffect(() => {
+      if (!isLoading && !isAuthenticated) {
+        router.replace('/(auth)/login');
+      }
+    }, [isAuthenticated, isLoading]);
+
+    if (isLoading) {
+      return (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color="#63b0a3" />
+        </View>
+      );
+    }
+
+    if (!isAuthenticated) {
+      return null;
+    }
+
+    return <Component {...props} />;
+  };
+};

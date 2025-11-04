@@ -5,6 +5,7 @@ import * as DocumentPicker from "expo-document-picker";
 import React, { useState } from "react";
 import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Card } from "react-native-paper";
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type FileItem = {
   name: string;
@@ -90,10 +91,11 @@ const UploadScreen: React.FC = () => {
   );
 
   return (
-
+    
     <View style={styles.container}>
+    <SafeAreaView>
       <Text style={styles.header}>Upload Documents</Text>
-
+    </SafeAreaView>
       <FlatList
         data={categories}
         keyExtractor={(item) => item.id}

@@ -25,8 +25,9 @@
 //   );
 // }
 import { Stack } from 'expo-router';
-import { AuthProvider } from './contexts/AuthContext';
 import { useEffect } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { AuthProvider } from './contexts/AuthContext';
 import { NotificationService } from './services/notificationService';
 
 export default function RootLayout() {
