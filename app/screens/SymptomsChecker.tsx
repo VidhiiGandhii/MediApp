@@ -130,9 +130,9 @@ export default function SymptomCheckerScreen() {
 
     } catch (error) {
       console.error("Symptom check failed:", error);
-      Alert.alert("Error", error.name === 'AbortError'
-        ? "Request timed out. Please check your network and try again."
-        : `Sorry, I couldn't get a prediction. Error: ${error.message}`);
+      Alert.alert("Error", error instanceof Error
+        ? `Sorry, I couldn't get a prediction. Error: ${error.message}`
+        : "An unknown error occurred");
     } finally {
       setIsTyping(false);
     }

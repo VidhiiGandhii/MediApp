@@ -3,17 +3,20 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import * as DocumentPicker from "expo-document-picker";
 import React, { useState } from "react";
-import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { FlatList, StyleSheet, Text, TouchableOpacity, View, Alert } from "react-native";
 import { Card } from "react-native-paper";
-import { SafeAreaView } from 'react-native-safe-area-context';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 type FileItem = {
-  name: string;
-  uri: string;
+  id: string;
+  fileName: string;
   category: string;
 };
 
 const categories = [
+  // ... (categories array is unchanged) ...
   { id: "1", name: "Prescription", icon: <MaterialIcons name="medication" size={24} color="white" /> },
   { id: "2", name: "Report", icon: <MaterialIcons name="summarize" size={24} color="white" /> },
   { id: "3", name: "Bill", icon: <FontAwesome5 name="file-invoice" size={24} color="white" /> },
@@ -21,52 +24,203 @@ const categories = [
 ];
 
 const UploadScreen: React.FC = () => {
-  const [files, setFiles] = useState<FileItem[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<FileItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  
+  // --- NEW STATE for viewing ---
+  const [isViewing, setIsViewing] = useState(false);
+  // -----------------------------
+
+  const fetchDocuments = async () => {
+    // ... (This function is unchanged) ...
+    setLoading(true);
+    try {
+      const token = await AsyncStorage.getItem("userToken");
+      if (!token) {
+        Alert.alert("Error", "You are not logged in.");
+        return;
+      }
+      const response = await fetch(`${API_URL}/api/documents`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) {
+        throw new Error("Failed to fetch documents");
+      }
+      const data = await response.json();
+      setUploadedFiles(data.documents || []);
+    } catch (error) {
+      console.error("Fetch documents error:", error);
+      Alert.alert("Error", "Failed to load documents.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDocuments();
+  }, []);
+
+  const uploadFile = async (
+    file: DocumentPicker.DocumentPickerAsset,
+    category: string
+  ) => {
+    // ... (This function is unchanged) ...
+    setUploading(true);
+    const token = await AsyncStorage.getItem("userToken");
+    if (!token) {
+      Alert.alert("Error", "Authentication token not found.");
+      setUploading(false);
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("category", category);
+    formData.append("description", file.name || "Uploaded file");
+    formData.append("file", {
+      uri: file.uri,
+      name: file.name,
+      type: file.mimeType,
+    } as any);
+
+    try {
+      const response = await fetch(`${API_URL}/api/upload`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.message || "Upload failed");
+      }
+
+      const data = await response.json();
+      setUploadedFiles((prev) => [...prev, data.document]);
+      Alert.alert("Success", `${file.name} uploaded to ${category}`);
+    } catch (error) {
+      console.error("Upload error:", error);
+      const errorMessage = typeof error === "object" && error !== null && "message" in error
+        ? (error as { message?: string }).message
+        : String(error);
+      Alert.alert("Error", `Failed to upload ${file.name}: ${errorMessage}`);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handlePick = async (category: string) => {
+    // ... (This function is unchanged) ...
     try {
-      setLoading(true);
       const result = await DocumentPicker.getDocumentAsync({
         type: ["application/pdf", "image/*"],
         copyToCacheDirectory: true,
       });
 
       if (result.canceled) {
-        setLoading(false);
         return;
       }
-
-      const pickedFiles = (result.assets || [result]).map((file: any) => ({
-        name: file.name || "Unnamed Document",
-        uri: file.uri,
-        category,
-      }));
-
-      setFiles((prev) => [...prev, ...pickedFiles]);
-      Alert.alert("Success", `${pickedFiles.length} file(s) added to ${category}`);
+      for (const file of result.assets) {
+        await uploadFile(file, category);
+      }
     } catch (error) {
       console.error("Document pick error:", error);
       Alert.alert("Error", "Failed to pick document. Please try again.");
-    } finally {
-      setLoading(false);
     }
   };
 
-  const handleRemoveFile = (index: number) => {
-    setFiles((prev) => prev.filter((_, i) => i !== index));
+  const handleRemoveFile = async (fileId: string) => {
+    // ... (This function is unchanged) ...
+    try {
+      const token = await AsyncStorage.getItem("userToken");
+      if (!token) {
+        Alert.alert("Error", "Authentication token not found.");
+        return;
+      }
+      const response = await fetch(`${API_URL}/api/documents/${fileId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) {
+        throw new Error("Failed to delete file");
+      }
+      setUploadedFiles((prev) => prev.filter((file) => file.id !== fileId));
+      Alert.alert("Success", "File removed");
+    } catch (error) {
+      console.error("Delete file error:", error);
+      Alert.alert("Error", "Failed to remove file.");
+    }
   };
 
+  // --- NEW FUNCTION to view the file ---
+ // --- NEW FUNCTION to view the file (works on web and native) ---
+  const handleViewFile = async (file: FileItem) => {
+    setIsViewing(true);
+    try {
+      const token = await AsyncStorage.getItem("userToken");
+      if (!token) {
+        Alert.alert("Error", "Authentication token not found.");
+        return;
+      }
+
+      const remoteUrl = `${API_URL}/api/documents/${file.id}/download`;
+
+      if (Platform.OS === 'web') {
+        // --- WEB SOLUTION (This part is correct and unchanged) ---
+        const response = await fetch(remoteUrl, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch file for viewing.');
+        }
+        const blob = await response.blob();
+        const fileUrl = URL.createObjectURL(blob);
+        WebBrowser.openBrowserAsync(fileUrl);
+
+      } else {
+        // --- NATIVE SOLUTION (Changed to use expo-sharing) ---
+        
+        // 1. Define a local path to save the file (this fix is still correct)
+        const localUri = FileSystem.documentDirectory + '/' + encodeURIComponent(file.fileName);
+
+        // 2. Download the file
+        const { uri } = await FileSystem.downloadAsync(remoteUrl, localUri, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        // 3. Use expo-sharing to open the file
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(uri);
+        } else {
+          Alert.alert("Error", "Viewing files is not available on this device.");
+        }
+      }
+
+    } catch (error) {
+      console.error("View file error:", error);
+      Alert.alert("Error", "Could not open the file.");
+    } finally {
+      setIsViewing(false);
+    }
+  };
+  // ------------------------------------
+  // ------------------------------------
+
   const renderCategory = ({ item }: { item: typeof categories[0] }) => (
-    <TouchableOpacity
-      style={styles.categoryCard}
+    <TouchableOpacity 
+      style={styles.categoryCard} 
       onPress={() => handlePick(item.name)}
-      disabled={loading}
+      disabled={uploading || isViewing} // --- MODIFIED ---
       activeOpacity={0.7}
     >
-      <View style={styles.iconContainer}>
-        {item.icon}
-      </View>
+      <View style={styles.iconContainer}>{item.icon}</View>
       <Text style={styles.categoryText}>{item.name}</Text>
     </TouchableOpacity>
   );
@@ -79,7 +233,7 @@ const UploadScreen: React.FC = () => {
             <Text style={styles.fileCategory}>{item.category}</Text>
             <Text style={styles.fileName} numberOfLines={2}>{item.name}</Text>
           </View>
-          <TouchableOpacity
+          <TouchableOpacity 
             style={styles.deleteButton}
             onPress={() => handleRemoveFile(index)}
           >
@@ -89,14 +243,16 @@ const UploadScreen: React.FC = () => {
       </Card.Content>
     </Card>
   );
+  // ------------------------------------------------------
 
   return (
     
     <View style={styles.container}>
     <SafeAreaView>
       <Text style={styles.header}>Upload Documents</Text>
-    </SafeAreaView>
+
       <FlatList
+        // ... (FlatList props unchanged) ...
         data={categories}
         keyExtractor={(item) => item.id}
         renderItem={renderCategory}
@@ -107,18 +263,20 @@ const UploadScreen: React.FC = () => {
       />
 
       <Text style={styles.subHeader}>
-        Uploaded Files {files.length > 0 && `(${files.length})`}
+        Uploaded Files{" "}
+        {uploadedFiles.length > 0 && `(${uploadedFiles.length})`}
       </Text>
 
-      {files.length === 0 ? (
+      {loading ? (
+        <ActivityIndicator size="large" color="#63b0a3" />
+      ) : uploadedFiles.length === 0 ? (
         <Text style={styles.noFilesText}>No files uploaded yet</Text>
       ) : (
         <FlatList
-          data={files}
-          keyExtractor={(item, index) => `${item.name}-${item.category}-${index}`}
-          renderItem={({ item, index }) => renderFile({ item, index })}
+          data={uploadedFiles}
+          keyExtractor={(item) => item.id}
+          renderItem={renderFile} // --- MODIFIED (will use new renderFile) ---
           contentContainerStyle={styles.fileList}
-          scrollEnabled={false}
         />
       )}
     </View>
@@ -127,6 +285,7 @@ const UploadScreen: React.FC = () => {
 
 export default UploadScreen;
 
+// --- STYLES (No changes, but included for completeness) ---
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -140,6 +299,17 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     textAlign: "center",
     color: "#63b0a3",
+  },
+  uploadingIndicator: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  uploadingText: {
+    marginLeft: 10,
+    color: '#63b0a3',
+    fontStyle: 'italic',
   },
   subHeader: {
     fontSize: 18,
