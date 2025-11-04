@@ -11,6 +11,8 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
   }),
 });
 
@@ -54,7 +56,7 @@ export class NotificationService {
       }
 
       // Create trigger for daily notification at specific time
-      const trigger: Notifications.DailyTriggerInput = {
+      const trigger: any = {
         hour,
         minute,
         repeats: true,
@@ -160,6 +162,7 @@ export class NotificationService {
       const trigger: Notifications.TimeIntervalTriggerInput = {
         seconds: daysUntilRefill * 24 * 60 * 60, // Convert days to seconds
         repeats: false,
+        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL
       };
 
       const notificationId = await Notifications.scheduleNotificationAsync({
