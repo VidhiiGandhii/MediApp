@@ -1,6 +1,7 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Dimensions,
   Image,
@@ -13,29 +14,72 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const { width } = Dimensions.get("window");
-
+interface UserData {
+    name: string;
+    email: string;
+    profilePicture: string;
+}
+const DEFAULT_PROFILE_PIC = 'https://example.com/default-profile-pic.png';
 export default function HomeScreen() {
   const router = useRouter();
+ const [user, setUser] = useState<UserData | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
+    useEffect(() => {
+        const loadUserData = async () => {
+            try {
+                const userDataJson = await AsyncStorage.getItem('userData');
+                
+                if (userDataJson) {
+                    const userDataFromStorage = JSON.parse(userDataJson);
+                    
+                    const completeUserData: UserData = {
+                        name: userDataFromStorage.name || 'User',
+                        email: userDataFromStorage.email || 'No Email',
+                        profilePicture: DEFAULT_PROFILE_PIC,
+                    };
+
+                    setUser(completeUserData);
+                } else {
+                    setUser({
+                        name: 'Guest User',
+                        email: 'Please log in',
+                        profilePicture: DEFAULT_PROFILE_PIC,
+                    });
+                }
+            } catch (error) {
+                console.error("Error loading user data from AsyncStorage:", error);
+                setUser(null);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        loadUserData();
+    }, []);
   return (
     <SafeAreaView style={styles.safeContainer}>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         {/* Header */}
-        <View style={styles.header}>
-          <Image
-            source={{ uri: "" }}
-            style={styles.avatar}
-          />
-          <View style={{ flex: 1, marginLeft: 10 }}>
-            <Text style={styles.welcome}>Hi, Welcome Back</Text>
-            <Text style={styles.username}>Ansh</Text>
-          </View>
-          <View style={styles.headerIcons}>
-            <TouchableOpacity style={styles.iconButton}onPress={() => router.push("../screens/setting")}>
-              <Ionicons name="settings-outline" size={22} color="#333" />
-            </TouchableOpacity>
-          </View>
-        </View>
+      <View style={styles.header}>
+  <Image
+    source={{ uri: user?.profilePicture || DEFAULT_PROFILE_PIC }}
+    style={styles.avatar}
+  />
+  <View style={{ flex: 1, marginLeft: 10 }}>
+    <Text style={styles.welcome}>Hi, Welcome Back</Text>
+    <Text style={styles.username}>{user?.name}</Text>
+  </View>
+  <View style={styles.headerIcons}>
+    <TouchableOpacity
+      style={styles.iconButton}
+      onPress={() => router.push("../screens/setting")}
+    >
+      <Ionicons name="settings-outline" size={22} color="#333" />
+    </TouchableOpacity>
+  </View>
+</View>
+
 
         {/* Quick Actions */}
         <View style={styles.quickActions}>
@@ -77,7 +121,7 @@ export default function HomeScreen() {
 
             <TouchableOpacity
               style={styles.card}
-              onPress={() => router.push("../(tabs)/FamilyScreen")}
+              onPress={() => router.push("../screens/FamilyScreen")}
             >
               <Ionicons name="people-outline" size={28} color="#9B51E0" />
               <Text style={styles.cardLabel}>View Family</Text>
