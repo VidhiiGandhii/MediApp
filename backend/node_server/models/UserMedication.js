@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 // User Medication Schema
 const userMedicationSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  medicineId: { type: mongoose.Schema.Types.ObjectId, ref: 'MedicineInventory', required: true },
+  medicineId: { type: mongoose.Schema.Types.ObjectId, ref: 'Inventory', required: true },
   medicineName: { type: String, required: true },
   dosage: { type: String, required: true },
   frequency: { type: String, required: true },

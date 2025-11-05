@@ -188,14 +188,14 @@ export class NotificationService {
   // Add notification response listener
   static addNotificationResponseListener(
     callback: (response: Notifications.NotificationResponse) => void
-  ): Notifications.Subscription {
+  ): Notifications.EventSubscription {
     return Notifications.addNotificationResponseReceivedListener(callback);
   }
 
   // Add notification received listener
   static addNotificationReceivedListener(
     callback: (notification: Notifications.Notification) => void
-  ): Notifications.Subscription {
+  ): Notifications.EventSubscription {
     return Notifications.addNotificationReceivedListener(callback);
   }
 }
