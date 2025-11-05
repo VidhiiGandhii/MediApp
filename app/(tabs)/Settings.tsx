@@ -95,7 +95,7 @@ export default function SettingsScreen() {
             icon="key-outline"
             iconSet="Ionicons"
             label="Change Password"
-            onPress={() => console.log('Navigate to Change Password')}
+            onPress={() => router.push('/screens/ChangePassword')}
             isLast
           />
         </View>
@@ -107,7 +107,7 @@ export default function SettingsScreen() {
             icon="notifications-outline"
             iconSet="Ionicons"
             label="Notification Settings"
-            onPress={() => console.log('Navigate to Notifications')}
+            onPress={() => router.push('/screens/Notification')}
           />
           <SettingsItem
             icon="color-palette-outline"
@@ -143,7 +143,7 @@ export default function SettingsScreen() {
             icon="info-outline"
             iconSet="Ionicons"
             label="About MediApp"
-            onPress={() => console.log('Navigate to About App')}
+            onPress={() => router.push('/screens/about')}
             isLast
           />
         </View>
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: '0',
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
     alignItems: 'center',
