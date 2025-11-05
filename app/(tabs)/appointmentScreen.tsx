@@ -1,12 +1,9 @@
 // FILE: app/(tabs)/appointmentScreen.tsx (or wherever yours is)
 
-import React, { useState, useCallback } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, Alert, Platform } from 'react-native';
-import { useFocusEffect, useRouter } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import api from '../../backend/node_server/services/api'; // Your axios instance
 
 // --- NEW IMPORT ---
@@ -80,6 +77,7 @@ const styles = StyleSheet.create({
   timeSlotText: { color: TextColor, fontWeight: '600' },
   selectedTimeSlotText: { color: CardColor },
 });
+// --- (End of styles) ---
 
 interface Doctor { _id: string; name: string; specialty: string; rating: number; }
 interface Appointment {
@@ -145,6 +143,7 @@ const AppointmentCard: React.FC<{ appointment: Appointment, onCancel: (id: strin
   );
 };
 const DoctorCard: React.FC<{ doctor: Doctor; onSelect: (doc: Doctor) => void }> = ({ doctor, onSelect }) => (
+  // ... (This component is largely unchanged, just uses `_id` for the key)
   <View style={[styles.card, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}>
     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
       <View style={{
@@ -168,6 +167,7 @@ const DoctorCard: React.FC<{ doctor: Doctor; onSelect: (doc: Doctor) => void }> 
   </View>
 );
 // --- (End of components) ---
+
 
 /**
  * Main Appointment Screen Component

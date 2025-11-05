@@ -124,9 +124,9 @@ export default function HomeScreen() {
           <View style={styles.headerIcons}>
             <TouchableOpacity
               style={styles.iconButton}
-              onPress={() => router.push("../screens/setting")}
+              onPress={() => router.push("/screens/ProfileScreen")}
             >
-              <Ionicons name="settings-outline" size={22} color="#333" />
+              <MaterialCommunityIcons name="account-outline" size={22} color="#333" />
             </TouchableOpacity>
           </View>
         </View>
@@ -169,7 +169,7 @@ export default function HomeScreen() {
 
             <TouchableOpacity
               style={styles.card}
-              onPress={() => router.push("../screens/FamilyScreen")}
+              onPress={() => router.push("/screens/FamilyScreen")}
             >
               <Ionicons name="people-outline" size={28} color="#9B51E0" />
               <Text style={styles.cardLabel}>View Family</Text>
@@ -224,7 +224,7 @@ export default function HomeScreen() {
 
 // --- Styles (I've removed the unused dateBox styles) ---
 const styles = StyleSheet.create({
-  safeContainer: { flex: 1, backgroundColor: "#fff" },
+  safeContainer: { flex: 1, backgroundColor: "#ffffffff" },
   container: {
     flex: 1,
     backgroundColor: "#F9FAFB",

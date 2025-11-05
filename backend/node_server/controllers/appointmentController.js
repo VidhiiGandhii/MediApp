@@ -1,5 +1,7 @@
-const Appointment = require('../models/Appointment');
-const Doctor = require('../models/Doctor');
+
+const Appointment = require('../models/appointment');
+const Doctor = require('../models/doctor');
+
 const mongoose = require('mongoose');
 
 // @desc    Get all appointments for the logged-in user
@@ -9,7 +11,7 @@ const getUserAppointments = async (req, res) => {
   try {
     const appointments = await Appointment.find({ userId: req.user.id })
       .sort({ appointmentTime: 1 }); // Sort by upcoming
-      
+
     res.json({ success: true, appointments });
   } catch (error) {
     console.error('Error fetching appointments:', error);
@@ -68,7 +70,7 @@ const cancelAppointment = async (req, res) => {
     if (!appointment) {
       return res.status(404).json({ success: false, message: 'Appointment not found' });
     }
-    
+
     if (appointment.status !== 'upcoming') {
       return res.status(400).json({ success: false, message: 'Only upcoming appointments can be cancelled' });
     }

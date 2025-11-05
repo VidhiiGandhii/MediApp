@@ -1,26 +1,27 @@
+import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as DocumentPicker from "expo-document-picker";
-import React, { useState, useEffect } from "react";
 import * as Sharing from 'expo-sharing';
+import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   FlatList,
+  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  Alert,
-  Platform,
-  ActivityIndicator,
 } from "react-native";
 import { Card } from "react-native-paper";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
-import Ionicons from "@expo/vector-icons/Ionicons";
 import { API_URL } from "../../config/api";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // --- NEW IMPORTS ---
 import * as FileSystem from 'expo-file-system/legacy';
 import * as WebBrowser from 'expo-web-browser';
+import { SafeAreaView } from "react-native-safe-area-context";
 // -------------------
 
 type FileItem = {
@@ -56,7 +57,7 @@ const UploadScreen: React.FC = () => {
         return;
       }
       const response = await fetch(`${API_URL}/api/documents`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}`},
       });
       if (!response.ok) {
         throw new Error("Failed to fetch documents");
@@ -112,7 +113,7 @@ const UploadScreen: React.FC = () => {
       }
 
       const data = await response.json();
-      setUploadedFiles((prev) => [...prev, data.document]);
+      setUploadedFiles((prev: any) => [...prev, data.document]);
       Alert.alert("Success", `${file.name} uploaded to ${category}`);
     } catch (error) {
       console.error("Upload error:", error);
@@ -160,7 +161,7 @@ const UploadScreen: React.FC = () => {
       if (!response.ok) {
         throw new Error("Failed to delete file");
       }
-      setUploadedFiles((prev) => prev.filter((file) => file.id !== fileId));
+      setUploadedFiles((prev: any[]) => prev.filter((file) => file.id !== fileId));
       Alert.alert("Success", "File removed");
     } catch (error) {
       console.error("Delete file error:", error);
@@ -270,7 +271,9 @@ const UploadScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
+    <SafeAreaView>
       <Text style={styles.header}>Upload Documents</Text>
+      </SafeAreaView>
 
       {/* --- NEW: Added loading indicator for viewing --- */}
       {(uploading || isViewing) && (
@@ -285,7 +288,7 @@ const UploadScreen: React.FC = () => {
       <FlatList
         // ... (FlatList props unchanged) ...
         data={categories}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item: { id: any; }) => item.id}
         renderItem={renderCategory}
         numColumns={2}
         columnWrapperStyle={styles.row}
@@ -295,7 +298,7 @@ const UploadScreen: React.FC = () => {
 
       <Text style={styles.subHeader}>
         Uploaded Files{" "}
-        {uploadedFiles.length > 0 && `(${uploadedFiles.length})`}
+        {uploadedFiles.length > 0 && (`${uploadedFiles.length}`)}
       </Text>
 
       {loading ? (
@@ -305,7 +308,7 @@ const UploadScreen: React.FC = () => {
       ) : (
         <FlatList
           data={uploadedFiles}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item: { id: any; }) => item.id}
           renderItem={renderFile} // --- MODIFIED (will use new renderFile) ---
           contentContainerStyle={styles.fileList}
         />
@@ -433,3 +436,7 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
   },
 });
+
+function setUploading(arg0: boolean) {
+  throw new Error("Function not implemented.");
+}

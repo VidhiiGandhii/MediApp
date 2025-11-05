@@ -1,4 +1,6 @@
-const Doctor = require('../models/Doctor');
+
+const Doctor = require('../models/doctor');
+
 
 // @desc    Get all doctors
 // @route   GET /api/doctors

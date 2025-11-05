@@ -1,23 +1,22 @@
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from "expo-router";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  
-  TouchableOpacity,
-  TextInput,
+  ActivityIndicator,
+  Alert,
   FlatList,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  ActivityIndicator,
-  Alert,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_URL } from "../../config/api";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { API_URL } from "../../config/api";
 
 interface Message {
   id: string;

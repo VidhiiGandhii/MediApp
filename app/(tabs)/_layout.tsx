@@ -79,12 +79,12 @@ export default function TabsLayout() {
        
 
         <Tabs.Screen
-          name="ProfileScreen"
+          name="Settings"
           options={{
-            title: "Profile",
+            title: "Settings",
             tabBarIcon: ({ color, focused }) => (
-              <MaterialCommunityIcons
-                name={focused ? "account" : "account-outline"}
+              <Ionicons
+                name={focused ? "settings" : "settings-outline"}
                 size={26}
                 color={color}
               />
