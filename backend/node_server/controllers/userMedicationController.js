@@ -1,6 +1,6 @@
 const UserMedication = require('../models/UserMedication');
 const MedicationHistory = require('../models/MedicationHistory');
-
+require('../models/inventory');
 /**
  * @route   GET /api/medications/:userId
  * @desc    Get all medications for a user
