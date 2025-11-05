@@ -76,23 +76,15 @@ export default function TabsLayout() {
           }}
         />
 
-        <Tabs.Screen
-          name="symptom-checker"
-          options={{
-            title: "Symptoms",
-            tabBarIcon: ({ color }) => (
-              <MaterialCommunityIcons name="stethoscope" size={26} color={color} />
-            ),
-          }}
-        />
+       
 
         <Tabs.Screen
-          name="ProfileScreen"
+          name="Settings"
           options={{
-            title: "Profile",
+            title: "Settings",
             tabBarIcon: ({ color, focused }) => (
-              <MaterialCommunityIcons
-                name={focused ? "account" : "account-outline"}
+              <Ionicons
+                name={focused ? "settings" : "settings-outline"}
                 size={26}
                 color={color}
               />
@@ -100,19 +92,7 @@ export default function TabsLayout() {
           }}
         />
 
-        <Tabs.Screen
-          name="inventory"
-          options={{
-            title: "Inventory",
-            tabBarIcon: ({ color, focused }) => (
-              <MaterialCommunityIcons
-                name={focused ? "package-variant" : "package-variant-closed"}
-                size={26}
-                color={color}
-              />
-            ),
-          }}
-        />
+        
       </Tabs>
     </SafeAreaView>
   );

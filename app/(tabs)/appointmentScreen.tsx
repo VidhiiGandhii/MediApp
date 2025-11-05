@@ -1,12 +1,17 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect, useRouter } from 'expo-router'; // Assuming you use expo-router
+// FILE: app/(tabs)/appointmentScreen.tsx (or wherever yours is)
+
+import axios from 'axios';
+import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { API_URL } from '../../config/api'; // Import your API_URL
+import api from '../../backend/node_server/services/api'; // Your axios instance
 
-// --- THEME AND STYLES ---
-// (Your styles are unchanged, I'm omitting them for brevity. Paste them back in.)
+// --- NEW IMPORT ---
+import DateTimePickerModal from "react-native-modal-datetime-picker";
+
+// --- THEME, STYLES, and INTERFACES ---
 const PrimaryColor = '#63b0a3';
+// ... (rest of your styles and interfaces)
 const BackgroundColor = '#f0f4f7';
 const CardColor = '#ffffff';
 const TextColor = '#333333';
@@ -14,131 +19,81 @@ const SubtextColor = '#666666';
 
 const styles = StyleSheet.create({
   // ... (Paste your original styles here)
-  container: {
-    flex: 1,
-    backgroundColor: BackgroundColor,
-  },
+  container: { flex: 1, backgroundColor: BackgroundColor },
   header: {
-    backgroundColor: PrimaryColor,
-    paddingVertical: 40,
-    paddingHorizontal: 20,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-    marginBottom: 20,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
+    backgroundColor: PrimaryColor, paddingVertical: 40, paddingHorizontal: 20,
+    borderBottomLeftRadius: 20, borderBottomRightRadius: 20,
+    marginBottom: 20, elevation: 5, shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 3,
   },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: CardColor,
-    marginTop: 20,
-  },
+  headerTitle: { fontSize: 28, fontWeight: 'bold', color: CardColor, marginTop: 20 },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: TextColor,
-    paddingHorizontal: 20,
-    marginBottom: 10,
+    fontSize: 20, fontWeight: '600', color: TextColor,
+    paddingHorizontal: 20, marginBottom: 10,
   },
   card: {
-    backgroundColor: CardColor,
-    borderRadius: 12,
-    padding: 15,
-    marginHorizontal: 20,
-    marginBottom: 15,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    backgroundColor: CardColor, borderRadius: 12, padding: 15,
+    marginHorizontal: 20, marginBottom: 15, elevation: 3,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1, shadowRadius: 4,
   },
   button: {
-    backgroundColor: PrimaryColor,
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 10,
+    backgroundColor: PrimaryColor, padding: 12, borderRadius: 8,
+    alignItems: 'center', marginTop: 10,
   },
-  buttonDisabled: {
-    backgroundColor: '#a0c0b8',
-  },
-  buttonText: {
-    color: CardColor,
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
+  buttonDisabled: { backgroundColor: '#a0c0b8' },
+  buttonText: { color: CardColor, fontWeight: 'bold', fontSize: 16 },
   tabBar: {
-    flexDirection: 'row',
-    marginHorizontal: 20,
-    marginBottom: 20,
-    backgroundColor: CardColor,
-    borderRadius: 10,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+    flexDirection: 'row', marginHorizontal: 20, marginBottom: 20,
+    backgroundColor: CardColor, borderRadius: 10, elevation: 2,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05, shadowRadius: 2,
   },
   tabButton: {
-    flex: 1,
-    paddingVertical: 12,
-    alignItems: 'center',
-    borderBottomWidth: 3,
-    borderColor: 'transparent',
+    flex: 1, paddingVertical: 12, alignItems: 'center',
+    borderBottomWidth: 3, borderColor: 'transparent',
   },
-  activeTab: {
+  activeTab: { borderColor: PrimaryColor },
+  tabText: { fontSize: 16, fontWeight: '600', color: SubtextColor },
+  activeTabText: { color: PrimaryColor },
+  loader: { marginTop: 40 },
+  emptyText: { textAlign: 'center', color: SubtextColor, marginTop: 20, fontSize: 16 },
+  
+  // --- NEW STYLES for Date/Time ---
+  datePickerButton: {
+    backgroundColor: '#f0f4f7', padding: 12, borderRadius: 8,
+    alignItems: 'center', marginVertical: 10,
+  },
+  datePickerText: { color: TextColor, fontWeight: '600' },
+  timeSlotContainer: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+  timeSlot: {
+    width: '30%', backgroundColor: '#f0f4f7', padding: 10,
+    borderRadius: 8, alignItems: 'center', marginVertical: 5,
+  },
+  selectedTimeSlot: {
+    backgroundColor: PrimaryColor,
     borderColor: PrimaryColor,
   },
-  tabText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: SubtextColor,
-  },
-  activeTabText: {
-    color: PrimaryColor,
-  },
-  loader: {
-    marginTop: 40,
-  },
-  emptyText: {
-    textAlign: 'center',
-    color: SubtextColor,
-    marginTop: 20,
-    fontSize: 16,
-  },
+  timeSlotText: { color: TextColor, fontWeight: '600' },
+  selectedTimeSlotText: { color: CardColor },
 });
 // --- (End of styles) ---
 
-
-// --- REAL DATA TYPES (matching backend) ---
-
-interface Doctor {
-  _id: string; // Changed from id
-  name: string;
-  specialty: string;
-  rating: number;
-}
-
+interface Doctor { _id: string; name: string; specialty: string; rating: number; }
 interface Appointment {
-  _id: string; // Changed from id
-  doctorId: string;
-  doctorName: string;
-  specialty: string;
-  appointmentTime: string; // This will be an ISO Date string from backend
-  status: 'upcoming' | 'completed' | 'cancelled';
+  _id: string; doctorId: string; doctorName: string; specialty: string;
+  appointmentTime: string; status: 'upcoming' | 'completed' | 'cancelled';
 }
 
-// --- COMPONENTS ---
+// --- MOCK TIME SLOTS (Backend doesn't provide this) ---
+const MOCK_TIME_SLOTS = [
+  "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "02:00 PM",
+  "02:30 PM", "03:00 PM", "03:30 PM",
+];
 
-const AppointmentCard: React.FC<{ 
-  appointment: Appointment, 
-  onCancel: (id: string) => void 
-}> = ({ appointment, onCancel }) => {
-  // ... (Your getStatusStyle function is unchanged)
+// --- COMPONENTS (AppointmentCard, DoctorCard) ---
+// (These are unchanged)
+const AppointmentCard: React.FC<{ appointment: Appointment, onCancel: (id: string) => void }> = ({ appointment, onCancel }) => {
   const getStatusStyle = (status: Appointment['status']) => {
     switch (status) {
       case 'upcoming': return { color: PrimaryColor, borderColor: PrimaryColor };
@@ -147,10 +102,7 @@ const AppointmentCard: React.FC<{
       default: return { color: SubtextColor, borderColor: SubtextColor };
     }
   };
-
   const statusStyles = getStatusStyle(appointment.status);
-  
-  // Format the date from the backend
   const date = new Date(appointment.appointmentTime);
   const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
   const formattedTime = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
@@ -163,18 +115,14 @@ const AppointmentCard: React.FC<{
           <Text style={{ fontSize: 14, color: SubtextColor, marginBottom: 5 }}>{appointment.specialty}</Text>
         </View>
         <View style={{
-          paddingHorizontal: 10,
-          paddingVertical: 5,
-          borderRadius: 6,
-          borderWidth: 1,
-          ...(statusStyles as any),
+          paddingHorizontal: 10, paddingVertical: 5, borderRadius: 6,
+          borderWidth: 1, ...(statusStyles as any),
         }}>
           <Text style={{ fontSize: 12, fontWeight: '600', ...(statusStyles as any) }}>
             {appointment.status.toUpperCase()}
           </Text>
         </View>
       </View>
-
       <View style={{ borderTopWidth: 1, borderTopColor: BackgroundColor, marginTop: 10, paddingTop: 10 }}>
         <Text style={{ fontSize: 14, color: SubtextColor }}>
           Date: <Text style={{ fontWeight: '600', color: TextColor }}>{formattedDate}</Text>
@@ -183,8 +131,6 @@ const AppointmentCard: React.FC<{
           Time: <Text style={{ fontWeight: '600', color: TextColor }}>{formattedTime}</Text>
         </Text>
       </View>
-      
-      {/* NEW: Cancel Button */}
       {appointment.status === 'upcoming' && (
         <TouchableOpacity 
           style={[styles.button, { backgroundColor: '#F44336', marginTop: 10 }]} 
@@ -196,7 +142,6 @@ const AppointmentCard: React.FC<{
     </View>
   );
 };
-
 const DoctorCard: React.FC<{ doctor: Doctor; onSelect: (doc: Doctor) => void }> = ({ doctor, onSelect }) => (
   // ... (This component is largely unchanged, just uses `_id` for the key)
   <View style={[styles.card, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}>
@@ -221,6 +166,7 @@ const DoctorCard: React.FC<{ doctor: Doctor; onSelect: (doc: Doctor) => void }> 
     </TouchableOpacity>
   </View>
 );
+// --- (End of components) ---
 
 
 /**
@@ -233,88 +179,88 @@ export default function AppointmentScreen() {
   const [activeTab, setActiveTab] = useState<'view' | 'book'>('view');
   
   const [isLoading, setIsLoading] = useState(true);
-  const [isBooking, setIsBooking] = useState(false); // For modal/form
-  const [isSubmitting, setIsSubmitting] = useState(false); // For booking loading
+  const [isBooking, setIsBooking] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
 
-  // --- DATA FETCHING ---
-  
+  // --- NEW STATE for Date/Time ---
+  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
+
+  // --- (Data Fetching is unchanged) ---
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const token = await AsyncStorage.getItem('userToken');
-      if (!token) {
-        Alert.alert("Session expired", "Please log in again.");
-        router.replace('/(auth)/login');
-        return;
-      }
-      
-      // Fetch both appointments and doctors in parallel
       const [appResponse, docResponse] = await Promise.all([
-        fetch(`${API_URL}/api/appointments`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }),
-        fetch(`${API_URL}/api/doctors`) // This is a public route
+        api.get('/appointments'), api.get('/doctors')
       ]);
-
-      if (!appResponse.ok) throw new Error('Failed to fetch appointments');
-      if (!docResponse.ok) throw new Error('Failed to fetch doctors');
-
-      const appData = await appResponse.json();
-      const docData = await docResponse.json();
-
-      setAppointments(appData.appointments || []);
-      setDoctors(docData.doctors || []);
-      
+      setAppointments(appResponse.data.appointments || []);
+      setDoctors(docResponse.data.doctors || []);
     } catch (error) {
       console.error("Error fetching data:", error);
-      Alert.alert("Error", "Could not load appointment data.");
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        Alert.alert("Session expired", "Please log in again.");
+        router.replace('/(auth)/login');
+      } else {
+        Alert.alert("Error", "Could not load appointment data.");
+      }
     } finally {
       setIsLoading(false);
     }
   };
-
-  // useFocusEffect re-fetches data every time the screen is viewed
   useFocusEffect(useCallback(() => { fetchData(); }, []));
 
-  // --- ACTIONS ---
-
+  
+  // --- UPDATED ACTIONS ---
   const handleSelectDoctor = (doctor: Doctor) => {
     setSelectedDoctor(doctor);
     setIsBooking(true);
+    setSelectedDate(null); // Reset date/time on new selection
+    setSelectedTime(null);
+  };
+  
+  // --- NEW ACTIONS for Date/Time ---
+  const showDatePicker = () => setDatePickerVisibility(true);
+  const hideDatePicker = () => setDatePickerVisibility(false);
+  
+  const handleDateConfirm = (date: Date) => {
+    setSelectedDate(date);
+    setSelectedTime(null); // Reset time when date changes
+    hideDatePicker();
   };
 
-  const handleBookAppointment = async (date: string, time: string) => {
-    if (!selectedDoctor) return;
+  const handleSelectTime = (time: string) => {
+    setSelectedTime(time);
+  };
+  
+  // --- UPDATED Booking Function ---
+  const handleBookAppointment = async () => {
+    if (!selectedDoctor || !selectedDate || !selectedTime) {
+      Alert.alert("Missing Details", "Please select a date and time slot.");
+      return;
+    }
     
     setIsSubmitting(true);
     try {
-      const token = await AsyncStorage.getItem('userToken');
+      // 1. Parse the time string (e.g., "09:30 AM")
+      const [time, modifier] = selectedTime.split(' ');
+      let [hours, minutes] = time.split(':').map(Number);
+      if (modifier === 'PM' && hours < 12) hours += 12;
+      if (modifier === 'AM' && hours === 12) hours = 0; // Midnight case
       
-      // Combine date and time into a real Date object
-      // This is a mock date, you MUST replace this with a real DateTimePicker
-      const mockAppointmentTime = new Date('2025-10-31T09:30:00');
+      // 2. Combine selected date and time
+      const finalAppointmentTime = new Date(selectedDate);
+      finalAppointmentTime.setHours(hours, minutes, 0, 0); // Set H, M, S, MS
 
-      const response = await fetch(`${API_URL}/api/appointments`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          doctorId: selectedDoctor._id,
-          appointmentTime: mockAppointmentTime.toISOString(), // Send as ISO string
-        }),
+      // 3. Send to backend
+      await api.post('/appointments', {
+        doctorId: selectedDoctor._id,
+        appointmentTime: finalAppointmentTime.toISOString(), // Send as ISO string
       });
-
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.message || "Booking failed");
-      }
 
       Alert.alert("Success!", `Appointment booked with ${selectedDoctor.name}.`);
       
-      // Reset state and switch back to view tab
       setIsBooking(false);
       setSelectedDoctor(null);
       setActiveTab('view');
@@ -322,35 +268,28 @@ export default function AppointmentScreen() {
 
     } catch (error) {
       console.error("Error booking appointment:", error);
-      Alert.alert("Booking Failed", error instanceof Error ? error.message : "An unknown error occurred.");
+      const message = axios.isAxiosError(error) 
+        ? error.response?.data.message 
+        : "An unknown error occurred.";
+      Alert.alert("Booking Failed", message);
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // --- (Cancel Appointment is unchanged) ---
   const handleCancelAppointment = async (appointmentId: string) => {
-    Alert.alert(
-      "Confirm Cancellation",
-      "Are you sure you want to cancel this appointment?",
-      [
-        { text: "No", style: "cancel" },
-        { 
-          text: "Yes, Cancel", 
-          style: "destructive", 
+    Alert.alert("Confirm Cancellation", "Are you sure?",
+      [ { text: "No", style: "cancel" },
+        { text: "Yes, Cancel", style: "destructive", 
           onPress: async () => {
             try {
-              const token = await AsyncStorage.getItem('userToken');
-              const response = await fetch(`${API_URL}/api/appointments/${appointmentId}/cancel`, {
-                method: 'PUT',
-                headers: { 'Authorization': `Bearer ${token}` },
-              });
-
-              if (!response.ok) throw new Error('Failed to cancel');
-              
+              await api.put(`/appointments/${appointmentId}/cancel`);
               Alert.alert("Success", "Appointment cancelled.");
-              fetchData(); // Refresh data
+              fetchData();
             } catch (error) {
-              Alert.alert("Error", "Could not cancel appointment.");
+              const message = axios.isAxiosError(error) ? error.response?.data.message : "Could not cancel appointment.";
+              Alert.alert("Error", message);
             }
           }
         }
@@ -359,63 +298,95 @@ export default function AppointmentScreen() {
   };
 
   // --- RENDER FUNCTIONS ---
-
-  const renderUpcomingAppointments = () => {
+  // (renderUpcomingAppointments is unchanged)
+  const renderUpcomingAppointments = () => { /* ... (paste your existing function here) ... */
     if (isLoading) return <ActivityIndicator size="large" color={PrimaryColor} style={styles.loader} />;
-    
-    const sortedAppointments = appointments
-      .slice()
-      .sort((a, b) => {
+    const sortedAppointments = appointments.slice().sort((a, b) => {
         if (a.status === 'upcoming' && b.status !== 'upcoming') return -1;
         if (a.status !== 'upcoming' && b.status === 'upcoming') return 1;
-        // Sort by date
         return new Date(a.appointmentTime).getTime() - new Date(b.appointmentTime).getTime();
       });
-
     return (
       <View>
         {sortedAppointments.length > 0 ? (
           sortedAppointments.map((app) => (
-            <AppointmentCard 
-              key={app._id} 
-              appointment={app} 
-              onCancel={handleCancelAppointment} 
-            />
+            <AppointmentCard key={app._id} appointment={app} onCancel={handleCancelAppointment} />
           ))
-        ) : (
-          <Text style={styles.emptyText}>No appointments yet!</Text>
-        )}
+        ) : ( <Text style={styles.emptyText}>No appointments yet!</Text> )}
       </View>
     );
   };
-
+  
+  // --- UPDATED Render Function for Booking ---
   const renderDoctorSelection = () => {
     if (isLoading) return <ActivityIndicator size="large" color={PrimaryColor} style={styles.loader} />;
 
+    // --- NEW Booking Form ---
     if (isBooking && selectedDoctor) {
-      // Simple Mock Booking Confirmation View
-      // YOU MUST REPLACE THIS with a real Date/Time Picker
       return (
         <View style={{ paddingHorizontal: 20 }}>
-          <Text style={styles.sectionTitle}>Confirm with {selectedDoctor.name}</Text>
+          <Text style={styles.sectionTitle}>Book with {selectedDoctor.name}</Text>
           <View style={styles.card}>
-            <Text style={{ fontSize: 16, fontWeight: '600', color: TextColor }}>Appointment Details</Text>
-            <Text style={{ color: SubtextColor, marginVertical: 10 }}>
+            <Text style={{ fontSize: 16, fontWeight: '600', color: TextColor, marginBottom: 10 }}>
               Specialty: {selectedDoctor.specialty}
             </Text>
-            <Text style={{ fontWeight: 'bold', marginTop: 10, color: TextColor }}>Preferred Date: Oct 31, 2025</Text>
-            <Text style={{ fontWeight: 'bold', marginBottom: 15, color: TextColor }}>Preferred Time: 09:30 AM</Text>
+            
+            {/* 1. Date Picker */}
+            <TouchableOpacity style={styles.datePickerButton} onPress={showDatePicker}>
+              <Text style={styles.datePickerText}>
+                {selectedDate ? selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: '2-digit' }) : "Select a Date"}
+              </Text>
+            </TouchableOpacity>
 
+            <DateTimePickerModal
+              isVisible={isDatePickerVisible}
+              mode="date"
+              onConfirm={handleDateConfirm}
+              onCancel={hideDatePicker}
+              minimumDate={new Date()} // Can't book in the past
+            />
+
+            {/* 2. Time Slots (conditionally rendered) */}
+            {selectedDate && (
+              <View>
+                <Text style={{ fontSize: 16, fontWeight: '600', color: TextColor, marginVertical: 10 }}>
+                  Select a Time Slot
+                </Text>
+                <View style={styles.timeSlotContainer}>
+                  {MOCK_TIME_SLOTS.map((time) => (
+                    <TouchableOpacity
+                      key={time}
+                      style={[
+                        styles.timeSlot,
+                        selectedTime === time && styles.selectedTimeSlot,
+                      ]}
+                      onPress={() => handleSelectTime(time)}
+                    >
+                      <Text style={[
+                        styles.timeSlotText,
+                        selectedTime === time && styles.selectedTimeSlotText,
+                      ]}>
+                        {time}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {/* 3. Confirm Button */}
             <TouchableOpacity
-              style={[styles.button, isSubmitting && styles.buttonDisabled]}
-              onPress={() => handleBookAppointment('Oct 31, 2025', '09:30 AM')}
-              disabled={isSubmitting}
+              style={[styles.button, (!selectedDate || !selectedTime || isSubmitting) && styles.buttonDisabled]}
+              onPress={handleBookAppointment}
+              disabled={!selectedDate || !selectedTime || isSubmitting}
             >
               {isSubmitting ? 
                 <ActivityIndicator color={CardColor} /> : 
                 <Text style={styles.buttonText}>Confirm Booking</Text>
               }
             </TouchableOpacity>
+
+            {/* 4. Cancel Button */}
             <TouchableOpacity
               style={[styles.button, { backgroundColor: SubtextColor, marginTop: 10 }]}
               onPress={() => setIsBooking(false)}
@@ -426,8 +397,9 @@ export default function AppointmentScreen() {
         </View>
       );
     }
+    // --- (End of new booking form) ---
 
-    // Doctor List View
+    // Doctor List View (unchanged)
     return (
       <View>
         {doctors.length > 0 ? (
@@ -441,19 +413,15 @@ export default function AppointmentScreen() {
     );
   };
 
+  // --- FINAL RENDER (Unchanged) ---
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Appointments</Text>
-      </View>
-
+      {/* ... (Header and Tab Bar JSX are unchanged) ... */}
+      <View style={styles.header}><Text style={styles.headerTitle}>Appointments</Text></View>
       <View style={styles.tabBar}>
         <TouchableOpacity
           style={[styles.tabButton, activeTab === 'view' && styles.activeTab]}
-          onPress={() => {
-            setActiveTab('view');
-            setIsBooking(false);
-          }}
+          onPress={() => { setActiveTab('view'); setIsBooking(false); }}
         >
           <Text style={[styles.tabText, activeTab === 'view' && styles.activeTabText]}>
             My Bookings
@@ -468,7 +436,7 @@ export default function AppointmentScreen() {
           </Text>
         </TouchableOpacity>
       </View>
-
+      
       <ScrollView contentContainerStyle={{ paddingBottom: 50 }}>
         {activeTab === 'view' ? renderUpcomingAppointments() : renderDoctorSelection()}
       </ScrollView>

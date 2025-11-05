@@ -66,6 +66,15 @@ export async function scheduleMedicationReminder(
         today.setDate(today.getDate() + 1);
       }
 
+      // Calculate seconds until the next scheduled time
+      const now = new Date();
+      let nextTrigger = new Date();
+      nextTrigger.setHours(hours, minutes, 0, 0);
+      if (nextTrigger <= now) {
+        nextTrigger.setDate(nextTrigger.getDate() + 1);
+      }
+      const seconds = Math.round((nextTrigger.getTime() - now.getTime()) / 1000);
+
       const identifier = await Notifications.scheduleNotificationAsync({
         content: {
           title: "Medication Reminder",
@@ -73,9 +82,8 @@ export async function scheduleMedicationReminder(
           data: { medicationId: medication.id },
         },
         trigger: {
-          type: "calendar",
-          hour: hours,
-          minute: minutes,
+          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+          seconds,
           repeats: true,
         },
       });

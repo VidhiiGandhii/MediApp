@@ -1,3 +1,4 @@
+console.log("!!!!!!!! SERVER IS RESTARTING - " + new Date().toLocaleTimeString() + " !!!!!!!!");
 const app = require('./app');
 const { connectDB } = require('./config/db');
 const { PORT } = require('./config/env');

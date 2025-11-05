@@ -1,7 +1,7 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { useRouter, useFocusEffect } from "expo-router"; // <-- Import useFocusEffect
+import React, { useEffect, useState, useCallback } from "react"; // <-- Import useCallback
 import {
   Dimensions,
   Image,
@@ -10,84 +10,136 @@ import {
   Text,
   TouchableOpacity,
   View,
+  ActivityIndicator, // <-- Import ActivityIndicator
+  Platform, // <-- Import Platform
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import api from "../../backend/node_server/services/api"; // <-- Import your axios instance
 
 const { width } = Dimensions.get("window");
+
 interface UserData {
-    name: string;
-    email: string;
-    profilePicture: string;
+  name: string;
+  email: string;
+  profilePicture: string;
 }
+
+// NEW: This must match the Appointment interface
+interface Appointment {
+  _id: string;
+  doctorName: string;
+  specialty: string;
+  appointmentTime: string; // This will be an ISO Date string from backend
+  status: 'upcoming' | 'completed' | 'cancelled';
+}
+
 const DEFAULT_PROFILE_PIC = 'https://example.com/default-profile-pic.png';
+
 export default function HomeScreen() {
   const router = useRouter();
- const [user, setUser] = useState<UserData | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<UserData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        const loadUserData = async () => {
-            try {
-                const userDataJson = await AsyncStorage.getItem('userData');
-                
-                if (userDataJson) {
-                    const userDataFromStorage = JSON.parse(userDataJson);
-                    
-                    const completeUserData: UserData = {
-                        name: userDataFromStorage.name || 'User',
-                        email: userDataFromStorage.email || 'No Email',
-                        profilePicture: DEFAULT_PROFILE_PIC,
-                    };
+  // --- NEW STATE for appointments ---
+  const [upcomingAppointment, setUpcomingAppointment] = useState<Appointment | null>(null);
+  const [isLoadingAppointment, setIsLoadingAppointment] = useState(true);
 
-                    setUser(completeUserData);
-                } else {
-                    setUser({
-                        name: 'Guest User',
-                        email: 'Please log in',
-                        profilePicture: DEFAULT_PROFILE_PIC,
-                    });
-                }
-            } catch (error) {
-                console.error("Error loading user data from AsyncStorage:", error);
-                setUser(null);
-            } finally {
-                setIsLoading(false);
-            }
-        };
+  // --- (loadUserData is unchanged) ---
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        const userDataJson = await AsyncStorage.getItem('userData');
+        if (userDataJson) {
+          const userDataFromStorage = JSON.parse(userDataJson);
+          const completeUserData: UserData = {
+            name: userDataFromStorage.name || 'User',
+            email: userDataFromStorage.email || 'No Email',
+            profilePicture: DEFAULT_PROFILE_PIC,
+          };
+          setUser(completeUserData);
+        } else {
+          setUser({ name: 'Guest User', email: 'Please log in', profilePicture: DEFAULT_PROFILE_PIC });
+        }
+      } catch (error) {
+        console.error("Error loading user data:", error);
+        setUser(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadUserData();
+  }, []);
 
-        loadUserData();
-    }, []);
+  // --- NEW FUNCTION to fetch appointments ---
+  const fetchUpcomingAppointment = async () => {
+    setIsLoadingAppointment(true);
+    try {
+      const token = await AsyncStorage.getItem('userToken'); // Check for token first
+      if (!token) {
+        setIsLoadingAppointment(false);
+        return; // Don't try to fetch if not logged in
+      }
+
+      const response = await api.get('/appointments'); // Uses axios instance
+      const allAppointments: Appointment[] = response.data.appointments || [];
+      
+      // Find the *next* upcoming appointment
+      const nextAppointment = allAppointments
+        .filter(a => a.status === 'upcoming')
+        .sort((a, b) => new Date(a.appointmentTime).getTime() - new Date(b.appointmentTime).getTime());
+
+      if (nextAppointment.length > 0) {
+        setUpcomingAppointment(nextAppointment[0]); // Set the very next one
+      } else {
+        setUpcomingAppointment(null); // No upcoming appointments
+      }
+    } catch (error) {
+      console.error("Error fetching upcoming appointment:", error);
+      setUpcomingAppointment(null);
+    } finally {
+      setIsLoadingAppointment(false);
+    }
+  };
+
+  // --- NEW HOOK to fetch data when screen is focused ---
+  useFocusEffect(
+    useCallback(() => {
+      fetchUpcomingAppointment();
+    }, [])
+  );
+
   return (
     <SafeAreaView style={styles.safeContainer}>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
           <Image
-            source={{ uri: "" }}
+            source={{ uri: user?.profilePicture || DEFAULT_PROFILE_PIC }}
             style={styles.avatar}
           />
           <View style={{ flex: 1, marginLeft: 10 }}>
             <Text style={styles.welcome}>Hi, Welcome Back</Text>
-            <Text style={styles.username}>Ansh</Text>
+            <Text style={styles.username}>{user?.name}</Text>
           </View>
           <View style={styles.headerIcons}>
-            <TouchableOpacity style={styles.iconButton}onPress={() => router.push("../screens/setting")}>
-              <Ionicons name="settings-outline" size={22} color="#333" />
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={() => router.push("/screens/ProfileScreen")}
+            >
+              <MaterialCommunityIcons name="account-outline" size={22} color="#333" />
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Quick Actions */}
         <View style={styles.quickActions}>
-
-
           <TouchableOpacity style={styles.searchBar}>
             <Ionicons name="search-outline" size={20} color="#666" />
             <Text style={styles.searchText}>Search</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Family Member Section */}
+        {/* Family Member Section (unchanged) */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Family Member</Text>
           <View style={styles.cardGrid}>
@@ -125,37 +177,41 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Appointments Section */}
+        {/* --- UPDATED Appointments Section --- */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Appointments</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingVertical: 10 }}
-          >
-            {["9 MON", "10 TUE", "11 WED", "12 THU", "13 FRI", "14 SAT"].map(
-              (day, index) => (
-                <TouchableOpacity key={index} style={styles.dateBox}>
-                  <Text style={styles.dateText}>{day.split(" ")[0]}</Text>
-                  <Text style={styles.dateSub}>{day.split(" ")[1]}</Text>
-                </TouchableOpacity>
-              )
-            )}
-          </ScrollView>
-
-          <View style={styles.appointmentCard}>
-            <Text style={styles.appointmentTime}>9 AM</Text>
-            <View style={{ flex: 1, marginLeft: 10 }}>
-              <Text style={styles.appointmentTitle}>Dr. Olivia Turner, M.D.</Text>
+          <Text style={styles.sectionTitle}>Upcoming Appointment</Text>
+          
+          {isLoadingAppointment ? (
+            <ActivityIndicator size="large" color="#63b0a3" style={{marginTop: 20}} />
+          ) : upcomingAppointment ? (
+            // --- This is the new card that shows REAL data ---
+            <View style={styles.appointmentCard}>
+              <Text style={styles.appointmentTime}>
+                {new Date(upcomingAppointment.appointmentTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+              </Text>
+              <View style={{ flex: 1, marginLeft: 10 }}>
+                <Text style={styles.appointmentTitle}>{upcomingAppointment.doctorName}</Text>
+                <Text style={styles.appointmentDetails}>
+                  {upcomingAppointment.specialty}
+                </Text>
+                <Text style={styles.appointmentDetails}>
+                  {new Date(upcomingAppointment.appointmentTime).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: '2-digit' })}
+                </Text>
+              </View>
+            </View>
+          ) : (
+            // --- This shows if there is no appointment ---
+            <View style={styles.appointmentCard}>
+              <Text style={styles.appointmentTitle}>No upcoming appointments</Text>
               <Text style={styles.appointmentDetails}>
-                Treatment and prevention of skin and photodermatitis.
+                Book a new appointment with a doctor.
               </Text>
             </View>
-          </View>
+          )}
         </View>
       </ScrollView>
 
-      {/* Floating Action Button for Symptom Checker */}
+      {/* Floating Action Button (unchanged) */}
       <TouchableOpacity
         style={styles.fab}
         onPress={() => router.push("../screens/SymptomsChecker")}
@@ -166,6 +222,7 @@ export default function HomeScreen() {
   );
 }
 
+// --- Styles (I've removed the unused dateBox styles) ---
 const styles = StyleSheet.create({
   safeContainer: { flex: 1, backgroundColor: "#ffffffff" },
   container: {
@@ -218,7 +275,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flex: 1,
     backgroundColor: "#EEE",
-    padding: 8,
+    padding: Platform.OS === 'ios' ? 12 : 8, // Added platform padding
     borderRadius: 12,
     marginLeft: 10,
   },
@@ -261,29 +318,6 @@ const styles = StyleSheet.create({
     color: "#333",
     textAlign: "center",
     marginTop: 10,
-  },
-  dateBox: {
-    width: 60,
-    height: 70,
-    borderRadius: 12,
-    backgroundColor: "#fff",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-  },
-  dateText: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#333",
-  },
-  dateSub: {
-    fontSize: 12,
-    color: "#666",
   },
   appointmentCard: {
     flexDirection: "row",

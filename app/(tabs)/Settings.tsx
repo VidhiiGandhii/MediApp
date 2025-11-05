@@ -1,9 +1,9 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons, MaterialIcons, Feather } from '@expo/vector-icons';
+import { Feather, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store'; // Import SecureStore for token management
+import React from 'react';
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 // Define the structure for a settings item
 interface SettingsItemProps {
@@ -83,7 +83,7 @@ export default function SettingsScreen() {
             icon="person-outline"
             iconSet="Ionicons"
             label="Edit Profile"
-            onPress={() => console.log('Navigate to Edit Profile')}
+            onPress={() => router.push('/screens/ProfileScreen')}
           />
           <SettingsItem
             icon="people-outline"
