@@ -1,14 +1,14 @@
-
-const Appointment = require('../models/appointment');
-const Doctor = require('../models/doctor');
-
+// 1. Use 'require' for all imports
 const mongoose = require('mongoose');
+const Appointment = require('../models/Appointment'); // Corrected path
+const Doctor = require('../models/Doctor'); // Corrected path
 
 // @desc    Get all appointments for the logged-in user
 // @route   GET /api/appointments
 // @access  Private
 const getUserAppointments = async (req, res) => {
   try {
+    // 2. Must call 'find' on the 'Appointment' model
     const appointments = await Appointment.find({ userId: req.user.id })
       .sort({ appointmentTime: 1 }); // Sort by upcoming
 
@@ -31,7 +31,7 @@ const bookAppointment = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Doctor ID and appointment time are required' });
     }
 
-    // Find the doctor to get their name and specialty
+    // 3. Must call 'findById' on the 'Doctor' model
     const doctor = await Doctor.findById(doctorId);
     if (!doctor) {
       return res.status(404).json({ success: false, message: 'Doctor not found' });
@@ -62,6 +62,7 @@ const bookAppointment = async (req, res) => {
 // @access  Private
 const cancelAppointment = async (req, res) => {
   try {
+    // 4. Must call 'findOne' on the 'Appointment' model
     const appointment = await Appointment.findOne({
       _id: req.params.id,
       userId: req.user.id // Ensure the user owns this appointment
@@ -87,6 +88,7 @@ const cancelAppointment = async (req, res) => {
   }
 };
 
+// 5. Use 'module.exports' instead of 'export default'
 module.exports = {
   getUserAppointments,
   bookAppointment,

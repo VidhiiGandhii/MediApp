@@ -1,5 +1,5 @@
 
-const Doctor = require('../models/doctor');
+const Doctor = require('../models/Doctor');
 
 
 // @desc    Get all doctors
