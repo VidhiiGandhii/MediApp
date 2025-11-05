@@ -1,159 +1,135 @@
-import * as Notifications from "expo-notifications";
-import { Platform } from "react-native";
-import { Medication } from "./storage";
+import * as Notifications from 'expo-notifications';
+import * as Device from 'expo-device';
+import { Platform } from 'react-native';
+// --- 1. IMPORT THE TRIGGER TYPES ---
+import { SchedulableTriggerInputTypes } from 'expo-notifications';
 
+// ... (setNotificationHandler is unchanged)
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
+    shouldShowBanner: true, 
+    shouldShowList: true,
   }),
 });
 
-export async function registerForPushNotificationsAsync(): Promise<
-  string | null
-> {
-  let token: string | null = null;
+// ... (Interface is unchanged)
+export interface MedicationData {
+  _id: string; 
+  medicineName: string;
+  dosage: string;
+  times: { hour: number; minute: number }[];
+  instructions?: string;
+}
 
-  const { status: existingStatus } = await Notifications.getPermissionsAsync();
-  let finalStatus = existingStatus;
-
-  if (existingStatus !== "granted") {
-    const { status } = await Notifications.requestPermissionsAsync();
-    finalStatus = status;
-  }
-
-  if (finalStatus !== "granted") {
-    return null;
-  }
-
-  try {
-    const response = await Notifications.getExpoPushTokenAsync();
-    token = response.data;
-
-    if (Platform.OS === "android") {
-      await Notifications.setNotificationChannelAsync("default", {
-        name: "default",
+export class NotificationService {
+  
+  // ... (requestPermissions is unchanged)
+  static async requestPermissions(): Promise<boolean> {
+    if (!Device.isDevice) {
+      console.log('Notifications only work on physical devices');
+      return false;
+    }
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
+    if (existingStatus !== 'granted') {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
+    if (finalStatus !== 'granted') {
+      console.log('Failed to get push notification permissions');
+      return false;
+    }
+    if (Platform.OS === 'android') {
+      await Notifications.setNotificationChannelAsync('default', {
+        name: 'default',
         importance: Notifications.AndroidImportance.MAX,
         vibrationPattern: [0, 250, 250, 250],
-        lightColor: "#1a8e2d",
+        lightColor: '#63b0a3ff',
       });
     }
-
-    return token;
-  } catch (error) {
-    console.error("Error getting push token:", error);
-    return null;
+    return true;
   }
-}
 
-export async function scheduleMedicationReminder(
-  medication: Medication
-): Promise<string | undefined> {
-  if (!medication.reminderEnabled) return;
+  static async scheduleMedicationReminders(med: MedicationData): Promise<void> {
+    try {
+      const hasPermission = await this.requestPermissions();
+      if (!hasPermission) return;
 
-  try {
-    // Schedule notifications for each time
-    for (const time of medication.times) {
-      const [hours, minutes] = time.split(":").map(Number);
-      const today = new Date();
-      today.setHours(hours, minutes, 0, 0);
+      await this.cancelMedicationReminders(med._id);
 
-      // If time has passed for today, schedule for tomorrow
-      if (today < new Date()) {
-        today.setDate(today.getDate() + 1);
+      for (const [index, time] of med.times.entries()) {
+        const identifier = `${med._id}_${index}`;
+        
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: '💊 Medication Reminder',
+            body: `It's time to take your ${med.medicineName} (${med.dosage})`,
+            sound: 'default',
+            data: {
+              type: 'medication_reminder',
+              medicationId: med._id,
+            }
+          },
+          trigger: {
+            hour: time.hour,
+            minute: time.minute,
+            repeats: true,
+            // --- 2. THIS IS THE FIX for the "daily" error ---
+            type: SchedulableTriggerInputTypes.CALENDAR,
+          },
+          identifier: identifier,
+        });
       }
+      console.log(`Successfully scheduled reminders for ${med.medicineName}`);
+    } catch (error) {
+      console.error('Error scheduling reminders:', error);
+    }
+  }
 
-      // Calculate seconds until the next scheduled time
-      const now = new Date();
-      let nextTrigger = new Date();
-      nextTrigger.setHours(hours, minutes, 0, 0);
-      if (nextTrigger <= now) {
-        nextTrigger.setDate(nextTrigger.getDate() + 1);
+  // ... (cancelMedicationReminders is unchanged)
+  static async cancelMedicationReminders(medicationId: string): Promise<void> {
+    try {
+      const allScheduled = await Notifications.getAllScheduledNotificationsAsync();
+      for (const notification of allScheduled) {
+        if (notification.identifier.startsWith(medicationId)) {
+          await Notifications.cancelScheduledNotificationAsync(notification.identifier);
+        }
       }
-      const seconds = Math.round((nextTrigger.getTime() - now.getTime()) / 1000);
+      console.log(`Cancelled existing reminders for ${medicationId}`);
+    } catch (error) {
+      console.error("Error cancelling notifications:", error);
+    }
+  }
+  
+  static async scheduleRefillReminder(medicationName: string, stock: number): Promise<void> {
+    try {
+      const hasPermission = await this.requestPermissions();
+      if (!hasPermission) return;
 
-      const identifier = await Notifications.scheduleNotificationAsync({
+      await Notifications.scheduleNotificationAsync({
         content: {
-          title: "Medication Reminder",
-          body: `Time to take ${medication.name} (${medication.dosage})`,
-          data: { medicationId: medication.id },
+          title: '🔔 Medication Refill Reminder',
+          body: `You're running low on ${medicationName}. You have ${stock} doses left.`,
+          data: { type: 'refill_reminder', medicationName },
         },
         trigger: {
-          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-          seconds,
-          repeats: true,
+          seconds: 5, // Show 5 seconds from now
+          // --- 3. THIS IS THE FIX for the "seconds" error ---
+          type: SchedulableTriggerInputTypes.TIME_INTERVAL,
         },
       });
-
-      return identifier;
+    } catch (error) {
+      console.error('Error scheduling refill reminder:', error);
     }
-  } catch (error) {
-    console.error("Error scheduling medication reminder:", error);
-    return undefined;
   }
-}
 
-export async function scheduleRefillReminder(
-  medication: Medication
-): Promise<string | undefined> {
-  if (!medication.refillReminder) return;
-
-  try {
-    // Schedule a notification when supply is low
-    if (medication.currentSupply <= medication.refillAt) {
-      const identifier = await Notifications.scheduleNotificationAsync({
-        content: {
-          title: "Refill Reminder",
-          body: `Your ${medication.name} supply is running low. Current supply: ${medication.currentSupply}`,
-          data: { medicationId: medication.id, type: "refill" },
-        },
-        trigger: null, // Show immediately
-      });
-
-      return identifier;
-    }
-  } catch (error) {
-    console.error("Error scheduling refill reminder:", error);
-    return undefined;
-  }
-}
-
-export async function cancelMedicationReminders(
-  medicationId: string
-): Promise<void> {
-  try {
-    const scheduledNotifications =
-      await Notifications.getAllScheduledNotificationsAsync();
-
-    for (const notification of scheduledNotifications) {
-      const data = notification.content.data as {
-        medicationId?: string;
-      } | null;
-      if (data?.medicationId === medicationId) {
-        await Notifications.cancelScheduledNotificationAsync(
-          notification.identifier
-        );
-      }
-    }
-  } catch (error) {
-    console.error("Error canceling medication reminders:", error);
-  }
-}
-
-export async function updateMedicationReminders(
-  medication: Medication
-): Promise<void> {
-  try {
-    // Cancel existing reminders
-    await cancelMedicationReminders(medication.id);
-
-    // Schedule new reminders
-    await scheduleMedicationReminder(medication);
-    await scheduleRefillReminder(medication);
-  } catch (error) {
-    console.error("Error updating medication reminders:", error);
+  // ... (addNotificationResponseListener is unchanged)
+  static addNotificationResponseListener(
+    callback: (response: Notifications.NotificationResponse) => void
+  ): Notifications.EventSubscription {
+    return Notifications.addNotificationResponseReceivedListener(callback);
   }
 }
