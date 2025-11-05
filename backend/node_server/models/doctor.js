@@ -20,5 +20,4 @@ const doctorSchema = new mongoose.Schema({
   // You can add more fields like location, bio, etc.
 }, { timestamps: true });
 
-const Doctor = mongoose.model('Doctor', doctorSchema);
-module.exports = Doctor;
+module.exports = mongoose.models.Doctor || mongoose.model('Doctor', doctorSchema);

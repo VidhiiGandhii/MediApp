@@ -8,7 +8,7 @@ const { authenticateToken } = require('../middleware/authMiddleware');
 const router = express.Router();
 
 // // --- Apply auth middleware to all appointment routes ---
-// router.use(authenticateToken);
+router.use(authenticateToken);
 
 router.get('/appointments', getUserAppointments);
 router.post('/appointments', bookAppointment);
