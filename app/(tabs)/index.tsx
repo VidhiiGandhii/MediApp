@@ -1,20 +1,20 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useRouter, useFocusEffect } from "expo-router"; // <-- Import useFocusEffect
-import React, { useEffect, useState, useCallback } from "react"; // <-- Import useCallback
+import { useFocusEffect, useRouter } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Dimensions,
   Image,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  ActivityIndicator, // <-- Import ActivityIndicator
-  Platform, // <-- Import Platform
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import api from "../../backend/node_server/services/api"; // <-- Import your axios instance
+import api from "../../backend/node_server/services/api";
 
 const { width } = Dimensions.get("window");
 
@@ -24,41 +24,53 @@ interface UserData {
   profilePicture: string;
 }
 
-// NEW: This must match the Appointment interface
 interface Appointment {
   _id: string;
   doctorName: string;
   specialty: string;
-  appointmentTime: string; // This will be an ISO Date string from backend
-  status: 'upcoming' | 'completed' | 'cancelled';
+  appointmentTime: string;
+  status: "upcoming" | "completed" | "cancelled";
 }
 
-const DEFAULT_PROFILE_PIC = 'https://example.com/default-profile-pic.png';
+interface Medication {
+  _id: string;
+  medicineName: string;
+  dosage: string;
+  scheduledTime: string;
+  status: "pending" | "taken" | "skipped" | "missed";
+}
+
+const DEFAULT_PROFILE_PIC = "https://example.com/default-profile-pic.png";
 
 export default function HomeScreen() {
   const router = useRouter();
   const [user, setUser] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // --- NEW STATE for appointments ---
   const [upcomingAppointment, setUpcomingAppointment] = useState<Appointment | null>(null);
   const [isLoadingAppointment, setIsLoadingAppointment] = useState(true);
 
-  // --- (loadUserData is unchanged) ---
+  const [nextMedicine, setNextMedicine] = useState<Medication | null>(null);
+  const [isLoadingMedicine, setIsLoadingMedicine] = useState(true);
+
   useEffect(() => {
     const loadUserData = async () => {
       try {
-        const userDataJson = await AsyncStorage.getItem('userData');
+        const userDataJson = await AsyncStorage.getItem("userData");
         if (userDataJson) {
           const userDataFromStorage = JSON.parse(userDataJson);
           const completeUserData: UserData = {
-            name: userDataFromStorage.name || 'User',
-            email: userDataFromStorage.email || 'No Email',
+            name: userDataFromStorage.name || "User",
+            email: userDataFromStorage.email || "No Email",
             profilePicture: DEFAULT_PROFILE_PIC,
           };
           setUser(completeUserData);
         } else {
-          setUser({ name: 'Guest User', email: 'Please log in', profilePicture: DEFAULT_PROFILE_PIC });
+          setUser({
+            name: "Guest User",
+            email: "Please log in",
+            profilePicture: DEFAULT_PROFILE_PIC,
+          });
         }
       } catch (error) {
         console.error("Error loading user data:", error);
@@ -70,28 +82,30 @@ export default function HomeScreen() {
     loadUserData();
   }, []);
 
-  // --- NEW FUNCTION to fetch appointments ---
   const fetchUpcomingAppointment = async () => {
     setIsLoadingAppointment(true);
     try {
-      const token = await AsyncStorage.getItem('userToken'); // Check for token first
+      const token = await AsyncStorage.getItem("userToken");
       if (!token) {
         setIsLoadingAppointment(false);
-        return; // Don't try to fetch if not logged in
+        return;
       }
 
-      const response = await api.get('/appointments'); // Uses axios instance
+      const response = await api.get("/appointments");
       const allAppointments: Appointment[] = response.data.appointments || [];
-      
-      // Find the *next* upcoming appointment
+
       const nextAppointment = allAppointments
-        .filter(a => a.status === 'upcoming')
-        .sort((a, b) => new Date(a.appointmentTime).getTime() - new Date(b.appointmentTime).getTime());
+        .filter((a) => a.status === "upcoming")
+        .sort(
+          (a, b) =>
+            new Date(a.appointmentTime).getTime() -
+            new Date(b.appointmentTime).getTime()
+        );
 
       if (nextAppointment.length > 0) {
-        setUpcomingAppointment(nextAppointment[0]); // Set the very next one
+        setUpcomingAppointment(nextAppointment[0]);
       } else {
-        setUpcomingAppointment(null); // No upcoming appointments
+        setUpcomingAppointment(null);
       }
     } catch (error) {
       console.error("Error fetching upcoming appointment:", error);
@@ -101,10 +115,43 @@ export default function HomeScreen() {
     }
   };
 
-  // --- NEW HOOK to fetch data when screen is focused ---
+  const fetchNextMedicine = async () => {
+    setIsLoadingMedicine(true);
+    try {
+      const userDataString = await AsyncStorage.getItem("userData");
+      const userId = userDataString ? JSON.parse(userDataString).id : null;
+
+      if (!userId) {
+        setNextMedicine(null);
+        setIsLoadingMedicine(false);
+        return;
+      }
+
+      const response = await api.get(`/medications/today/${userId}`);
+      const schedule: Medication[] = response.data.schedule || [];
+
+      const upcoming = schedule
+        .filter((dose) => dose.status === "pending")
+        .sort(
+          (a, b) =>
+            new Date(a.scheduledTime).getTime() -
+            new Date(b.scheduledTime).getTime()
+        );
+
+      if (upcoming.length > 0) setNextMedicine(upcoming[0]);
+      else setNextMedicine(null);
+    } catch (error) {
+      console.error("Error fetching next medicine:", error);
+      setNextMedicine(null);
+    } finally {
+      setIsLoadingMedicine(false);
+    }
+  };
+
   useFocusEffect(
     useCallback(() => {
       fetchUpcomingAppointment();
+      fetchNextMedicine();
     }, [])
   );
 
@@ -124,9 +171,13 @@ export default function HomeScreen() {
           <View style={styles.headerIcons}>
             <TouchableOpacity
               style={styles.iconButton}
-              onPress={() => router.push("/screens/ProfileScreen")}
+              onPress={() => router.push("../../screens/ProfileScreen")}
             >
-              <MaterialCommunityIcons name="account-outline" size={22} color="#333" />
+              <MaterialCommunityIcons
+                name="account-outline"
+                size={22}
+                color="#333"
+              />
             </TouchableOpacity>
           </View>
         </View>
@@ -139,7 +190,7 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Family Member Section (unchanged) */}
+        {/* Family Member Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Family Member</Text>
           <View style={styles.cardGrid}>
@@ -155,7 +206,11 @@ export default function HomeScreen() {
               style={styles.card}
               onPress={() => router.push("/screens/upload")}
             >
-              <Ionicons name="document-text-outline" size={28} color="#27AE60" />
+              <Ionicons
+                name="document-text-outline"
+                size={28}
+                color="#27AE60"
+              />
               <Text style={styles.cardLabel}>Upload</Text>
             </TouchableOpacity>
 
@@ -177,30 +232,36 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* --- UPDATED Appointments Section --- */}
+        {/* Upcoming Appointment Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Upcoming Appointment</Text>
-          
           {isLoadingAppointment ? (
-            <ActivityIndicator size="large" color="#63b0a3" style={{marginTop: 20}} />
+            <ActivityIndicator size="large" color="#63b0a3" style={{ marginTop: 20 }} />
           ) : upcomingAppointment ? (
-            // --- This is the new card that shows REAL data ---
             <View style={styles.appointmentCard}>
               <Text style={styles.appointmentTime}>
-                {new Date(upcomingAppointment.appointmentTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                {new Date(upcomingAppointment.appointmentTime).toLocaleTimeString("en-US", {
+                  hour: "numeric",
+                  minute: "2-digit",
+                })}
               </Text>
               <View style={{ flex: 1, marginLeft: 10 }}>
-                <Text style={styles.appointmentTitle}>{upcomingAppointment.doctorName}</Text>
+                <Text style={styles.appointmentTitle}>
+                  {upcomingAppointment.doctorName}
+                </Text>
                 <Text style={styles.appointmentDetails}>
                   {upcomingAppointment.specialty}
                 </Text>
                 <Text style={styles.appointmentDetails}>
-                  {new Date(upcomingAppointment.appointmentTime).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: '2-digit' })}
+                  {new Date(upcomingAppointment.appointmentTime).toLocaleDateString("en-US", {
+                    weekday: "long",
+                    month: "long",
+                    day: "2-digit",
+                  })}
                 </Text>
               </View>
             </View>
           ) : (
-            // --- This shows if there is no appointment ---
             <View style={styles.appointmentCard}>
               <Text style={styles.appointmentTitle}>No upcoming appointments</Text>
               <Text style={styles.appointmentDetails}>
@@ -209,9 +270,41 @@ export default function HomeScreen() {
             </View>
           )}
         </View>
+
+        {/* 🆕 Next Medicine Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Next Medicine</Text>
+
+          {isLoadingMedicine ? (
+            <ActivityIndicator size="large" color="#63b0a3" style={{ marginTop: 20 }} />
+          ) : nextMedicine ? (
+            <TouchableOpacity
+              style={styles.appointmentCard}
+              onPress={() => router.push("../MedicineTracker")}
+            >
+              <Ionicons name="medkit-outline" size={26} color="#63b0a3" style={{ marginRight: 10 }} />
+              <View>
+                <Text style={styles.appointmentTitle}>{nextMedicine.medicineName}</Text>
+                <Text style={styles.appointmentDetails}>{nextMedicine.dosage}</Text>
+                <Text style={styles.appointmentDetails}>
+                  {new Date(nextMedicine.scheduledTime).toLocaleTimeString("en-US", {
+                    hour: "numeric",
+                    minute: "2-digit",
+                  })}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.appointmentCard}>
+              <Text style={styles.appointmentTitle}>No upcoming medicines</Text>
+              <Text style={styles.appointmentDetails}>
+                You have no medicines scheduled for now.
+              </Text>
+            </View>
+          )}
+        </View>
       </ScrollView>
 
-      {/* Floating Action Button (unchanged) */}
       <TouchableOpacity
         style={styles.fab}
         onPress={() => router.push("../screens/SymptomsChecker")}
@@ -222,77 +315,40 @@ export default function HomeScreen() {
   );
 }
 
-// --- Styles (I've removed the unused dateBox styles) ---
 const styles = StyleSheet.create({
-  safeContainer: { flex: 1, backgroundColor: "#ffffffff" },
+  safeContainer: { flex: 1, backgroundColor: "#5fb093ff" },
   container: {
     flex: 1,
     backgroundColor: "#F9FAFB",
+    borderTopLeftRadius: 25,
+    borderTopRightRadius: 25,
+    marginTop: -10,
+    minHeight: Dimensions.get("window").height,
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 20,
-  },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-  },
-  welcome: {
-    fontSize: 14,
-    color: "#666",
-  },
-  username: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#222",
-  },
-  headerIcons: {
-    flexDirection: "row",
-    gap: 10,
-  },
-  iconButton: {
-    marginLeft: 12,
-  },
+  header: { flexDirection: "row", alignItems: "center", padding: 20 },
+  avatar: { width: 48, height: 48, borderRadius: 24 },
+  welcome: { fontSize: 14, color: "#666" },
+  username: { fontSize: 18, fontWeight: "bold", color: "#222" },
+  headerIcons: { flexDirection: "row", gap: 10 },
+  iconButton: { marginLeft: 12 },
   quickActions: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 20,
     marginBottom: 20,
   },
-  quickItem: {
-    alignItems: "center",
-    marginRight: 20,
-  },
-  quickLabel: {
-    fontSize: 12,
-    marginTop: 5,
-    color: "#444",
-  },
   searchBar: {
     flexDirection: "row",
     alignItems: "center",
     flex: 1,
     backgroundColor: "#EEE",
-    padding: Platform.OS === 'ios' ? 12 : 8, // Added platform padding
+    padding: Platform.OS === "ios" ? 12 : 8,
     borderRadius: 12,
     marginLeft: 10,
   },
-  searchText: {
-    marginLeft: 6,
-    color: "#666",
-  },
-  section: {
-    paddingHorizontal: 20,
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    marginBottom: 12,
-    color: "#333",
-  },
+  searchText: { marginLeft: 6, color: "#666" },
+  section: { paddingHorizontal: 20, marginBottom: 20 },
+  sectionTitle: { fontSize: 18, fontWeight: "700", marginBottom: 12, color: "#333" },
   cardGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -332,21 +388,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 8,
   },
-  appointmentTime: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#4A90E2",
-  },
-  appointmentTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#333",
-  },
-  appointmentDetails: {
-    fontSize: 13,
-    color: "#666",
-    marginTop: 4,
-  },
+  appointmentTime: { fontSize: 14, fontWeight: "600", color: "#4A90E2" },
+  appointmentTitle: { fontSize: 16, fontWeight: "700", color: "#333" },
+  appointmentDetails: { fontSize: 13, color: "#666", marginTop: 4 },
   fab: {
     position: "absolute",
     width: 60,
@@ -358,9 +402,5 @@ const styles = StyleSheet.create({
     backgroundColor: "#63b0a3",
     borderRadius: 30,
     elevation: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
   },
 });

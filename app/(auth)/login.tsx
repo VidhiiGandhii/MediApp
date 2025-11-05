@@ -18,7 +18,7 @@ import { useAuth } from "../contexts/AuthContext";
 
 // 🚨 CRITICAL: REPLACE THIS WITH YOUR COMPUTER'S ACTUAL LOCAL IPV4 ADDRESS AND PORT 3000
 // Example: http://192.168.1.5:3000
-const API_URL = "http://192.168.1.5:3000"; 
+import { API_URL } from "../../config/api"; 
 
 type TabletButtonProps = {
     onPress: () => void;
