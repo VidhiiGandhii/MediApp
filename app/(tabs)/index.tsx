@@ -14,7 +14,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import api from "../../backend/node_server/services/api";
+import api from "../services/api";
 
 const { width } = Dimensions.get("window");
 

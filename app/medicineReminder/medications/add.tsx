@@ -1,26 +1,25 @@
 // FILE: medicineReminder/medications/add.tsx
-import { useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  Switch,
-  Dimensions,
-  Platform,
-  Alert,
-  ActivityIndicator,
-  FlatList,
-} from "react-native";
-import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import DateTimePickerModal from "react-native-modal-datetime-picker";
-import { LinearGradient } from "expo-linear-gradient";
-import api from "../../../backend/node_server/services/api"; // Your axios instance
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
+import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
+import { useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Dimensions,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
+} from "react-native";
+import DateTimePickerModal from "react-native-modal-datetime-picker";
+import api from "../../services/api"; // Your axios instance
 import { NotificationService } from '../../services/notificationService';
 
 const { width } = Dimensions.get("window");

@@ -1,24 +1,24 @@
-import { useState, useEffect } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
+import { LinearGradient } from "expo-linear-gradient";
+import { useLocalSearchParams, useRouter } from "expo-router"; // <-- Import useLocalSearchParams
+import { useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  Switch,
+  ActivityIndicator,
+  Alert,
   Dimensions,
   Platform,
-  Alert,
-  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { useRouter, useLocalSearchParams } from "expo-router"; // <-- Import useLocalSearchParams
-import { Ionicons } from "@expo/vector-icons";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
-import { LinearGradient } from "expo-linear-gradient";
-import api from "../../../../backend/node_server/services/api"; // Your axios instance
-import axios from "axios";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import api from "../../../services/api"; // Your axios instance
 
 const { width } = Dimensions.get("window");
 

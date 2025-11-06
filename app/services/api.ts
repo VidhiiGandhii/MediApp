@@ -1,6 +1,6 @@
-import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_URL } from '../../../config/api'; // Using relative path from services folder
+import axios from 'axios';
+import { API_URL } from '../../config/api'; // Using relative path from services folder
 
 // Create a new axios instance
 const api = axios.create({
