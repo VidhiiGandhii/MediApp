@@ -20,7 +20,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.vidhigandhi.HealthApp"
+      "package": "com.project.HealthApp"
     },
     "web": {
       "bundler": "metro",
@@ -28,7 +28,9 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+
       "expo-router",
+      
       [
         "expo-splash-screen",
         {
@@ -38,7 +40,13 @@
           "backgroundColor": "#ffffff"
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-document-picker",
+        {
+          "iCloudContainerEnvironment": "Production"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
