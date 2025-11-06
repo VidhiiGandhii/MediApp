@@ -1,0 +1,14 @@
+# Exclude the entire backend server
+backend/
+
+# Standard ignores
+.git/
+node_modules/
+
+# Env files
+.env
+backend/node_server/.env
+
+# Build artifacts
+android/build/
+ios/build/
