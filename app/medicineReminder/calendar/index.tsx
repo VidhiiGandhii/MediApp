@@ -1,22 +1,22 @@
 // FILE: medicineReminder/calendar/index.tsx
-import React, { useState, useCallback, useMemo, JSX } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  Platform,
-  Alert,
-  ActivityIndicator,
-} from "react-native";
-import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
-import { useFocusEffect } from "@react-navigation/native";
-import api from "../../../backend/node_server/services/api"; // Your axios instance
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Calendar, DateData } from 'react-native-calendars'; // Import calendar
+import { useFocusEffect } from "@react-navigation/native";
+import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
+import React, { JSX, useCallback, useMemo, useState } from "react";
+import {
+    ActivityIndicator,
+    Alert,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from "react-native";
+import { Calendar } from 'react-native-calendars'; // Import calendar
+import api from "../../services/api"; // Your axios instance
 
 // --- UPDATED: Added new interface ---
 interface Medication {

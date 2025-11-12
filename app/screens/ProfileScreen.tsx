@@ -1,6 +1,8 @@
+import { API_URL } from '@/config/api';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
+import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -17,11 +19,10 @@ import {
     View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router'; 
 
 // --- Configuration ---
 // 🚨 CRITICAL: Replace "http://YOUR_LOCAL_IP:3000/api" with your server's actual IPv4 address!
-const BASE_URL = "http://YOUR_LOCAL_IP:3000/api"; 
+// const BASE_URL = "http://YOUR_LOCAL_IP:3000/api"; 
 const DEFAULT_PROFILE_PIC = 'https://placehold.co/100x100/63b0a3/FFFFFF?text=A';
 
 // --- THEME ---
@@ -201,7 +202,7 @@ const ProfileScreen = () => {
         // 2. Send Profile Data to Backend (MOCKED: PUT /api/user/profile/:id)
         try {
             // NOTE: This fetch call is mocked and relies on a valid BASE_URL
-            const response = await fetch(`${BASE_URL}/user/profile/${user.id}`, {
+            const response = await fetch(`${API_URL}/user/profile/${user.id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

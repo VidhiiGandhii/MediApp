@@ -3,7 +3,10 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as DocumentPicker from "expo-document-picker";
+import * as FileSystem from 'expo-file-system/legacy';
+import * as SecureStore from 'expo-secure-store';
 import * as Sharing from 'expo-sharing';
+import * as WebBrowser from 'expo-web-browser';
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -16,14 +19,8 @@ import {
   View,
 } from "react-native";
 import { Card } from "react-native-paper";
-import { API_URL } from "../../config/api";
-
-// --- NEW IMPORTS ---
-import * as FileSystem from 'expo-file-system/legacy';
-import * as WebBrowser from 'expo-web-browser';
 import { SafeAreaView } from "react-native-safe-area-context";
-// -------------------
-
+import { API_URL } from "../../config/api";
 type FileItem = {
   id: string;
   fileName: string;
@@ -31,7 +28,6 @@ type FileItem = {
 };
 
 const categories = [
-  // ... (categories array is unchanged) ...
   { id: "1", name: "Prescription", icon: <MaterialIcons name="medication" size={24} color="white" /> },
   { id: "2", name: "Report", icon: <MaterialIcons name="summarize" size={24} color="white" /> },
   { id: "3", name: "Bill", icon: <FontAwesome5 name="file-invoice" size={24} color="white" />},
@@ -42,31 +38,78 @@ const UploadScreen: React.FC = () => {
   const [uploadedFiles, setUploadedFiles] = useState<FileItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
-  
-  // --- NEW STATE for viewing ---
   const [isViewing, setIsViewing] = useState(false);
-  // -----------------------------
+
+  // Helper function to validate token
+  const getValidToken = async (): Promise<string | null> => {
+    try {
+      const token = await SecureStore.getItem("userToken");
+      if (!token || token.trim() === '') {
+        console.log("❌ No valid token found in AsyncStorage");
+        return null;
+      }
+      console.log("✅ Token retrieved successfully");
+      return token;
+    } catch (error) {
+      console.error("Error retrieving token:", error);
+      return null;
+    }
+  };
 
   const fetchDocuments = async () => {
-    // ... (This function is unchanged) ...
     setLoading(true);
     try {
-      const token = await AsyncStorage.getItem("userToken");
+      const token = await getValidToken();
       if (!token) {
-        Alert.alert("Error", "You are not logged in.");
+        Alert.alert(
+          "Authentication Required", 
+          "Please log in again to view your documents.",
+          [
+            { 
+              text: "OK",
+              onPress: () => {
+                // Navigate to login screen or handle re-authentication
+                console.log("User needs to log in again");
+              }
+            }
+          ]
+        );
         return;
       }
+
+      console.log(`📡 Fetching documents from: ${API_URL}/api/documents`);
+      
       const response = await fetch(`${API_URL}/api/documents`, {
-        headers: { Authorization: `Bearer ${token}`},
+        method: 'GET',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
       });
-      if (!response.ok) {
-        throw new Error("Failed to fetch documents");
+      // const response = await api.get('/documents');
+
+      if (response.status === 401 || response.status === 403) {
+        // Token is invalid or expired
+        await AsyncStorage.removeItem("userToken");
+        Alert.alert(
+          "Session Expired",
+          "Your session has expired. Please log in again.",
+          [{ text: "OK" }]
+        );
+        return;
       }
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to fetch documents");
+      }
+
       const data = await response.json();
+      console.log(`✅ Fetched ${data.documents?.length || 0} documents`);
       setUploadedFiles(data.documents || []);
     } catch (error) {
       console.error("Fetch documents error:", error);
-      Alert.alert("Error", "Failed to load documents.");
+      Alert.alert("Error", "Failed to load documents. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -80,32 +123,40 @@ const UploadScreen: React.FC = () => {
     file: DocumentPicker.DocumentPickerAsset,
     category: string
   ) => {
-    // ... (This function is unchanged) ...
     setUploading(true);
-    const token = await AsyncStorage.getItem("userToken");
-    if (!token) {
-      Alert.alert("Error", "Authentication token not found.");
-      setUploading(false);
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("category", category);
-    formData.append("description", file.name || "Uploaded file");
-    formData.append("file", {
-      uri: file.uri,
-      name: file.name,
-      type: file.mimeType,
-    } as any);
-
+    
     try {
+      const token = await getValidToken();
+      if (!token) {
+        Alert.alert("Error", "Authentication token not found. Please log in again.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("category", category);
+      formData.append("description", file.name || "Uploaded file");
+      formData.append("file", {
+        uri: file.uri,
+        name: file.name,
+        type: file.mimeType,
+      } as any);
+
+      console.log(`📤 Uploading file: ${file.name}`);
+
       const response = await fetch(`${API_URL}/api/upload`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: formData,
       });
+      // const response = await api.post('/upload', formData);
+
+      if (response.status === 401 || response.status === 403) {
+        await AsyncStorage.removeItem("userToken");
+        Alert.alert("Session Expired", "Please log in again.");
+        return;
+      }
 
       if (!response.ok) {
         const err = await response.json();
@@ -113,13 +164,12 @@ const UploadScreen: React.FC = () => {
       }
 
       const data = await response.json();
-      setUploadedFiles((prev: any) => [...prev, data.document]);
+      setUploadedFiles((prev) => [...prev, data.document]);
       Alert.alert("Success", `${file.name} uploaded to ${category}`);
+      console.log(`✅ File uploaded successfully`);
     } catch (error) {
       console.error("Upload error:", error);
-      const errorMessage = typeof error === "object" && error !== null && "message" in error
-        ? (error as { message?: string }).message
-        : String(error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
       Alert.alert("Error", `Failed to upload ${file.name}: ${errorMessage}`);
     } finally {
       setUploading(false);
@@ -127,7 +177,6 @@ const UploadScreen: React.FC = () => {
   };
 
   const handlePick = async (category: string) => {
-    // ... (This function is unchanged) ...
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: ["application/pdf", "image/*"],
@@ -147,43 +196,53 @@ const UploadScreen: React.FC = () => {
   };
 
   const handleRemoveFile = async (fileId: string) => {
-    // ... (This function is unchanged) ...
     try {
-      const token = await AsyncStorage.getItem("userToken");
+      const token = await getValidToken();
       if (!token) {
-        Alert.alert("Error", "Authentication token not found.");
+        Alert.alert("Error", "Authentication token not found. Please log in again.");
         return;
       }
+
       const response = await fetch(`${API_URL}/api/documents/${fileId}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
       });
+      // const response = await api.delete(`/documents/${fileId}`);
+
+      if (response.status === 401 || response.status === 403) {
+        await AsyncStorage.removeItem("userToken");
+        Alert.alert("Session Expired", "Please log in again.");
+        return;
+      }
+
       if (!response.ok) {
         throw new Error("Failed to delete file");
       }
-      setUploadedFiles((prev: any[]) => prev.filter((file) => file.id !== fileId));
+
+      setUploadedFiles((prev) => prev.filter((file) => file.id !== fileId));
       Alert.alert("Success", "File removed");
+      console.log(`🗑️ File removed successfully`);
     } catch (error) {
       console.error("Delete file error:", error);
       Alert.alert("Error", "Failed to remove file.");
     }
   };
 
-  // --- NEW FUNCTION to view the file ---
- // --- NEW FUNCTION to view the file (works on web and native) ---
   const handleViewFile = async (file: FileItem) => {
     setIsViewing(true);
     try {
-      const token = await AsyncStorage.getItem("userToken");
+      const token = await getValidToken();
       if (!token) {
-        Alert.alert("Error", "Authentication token not found.");
+        Alert.alert("Error", "Authentication token not found. Please log in again.");
         return;
       }
 
       const remoteUrl = `${API_URL}/api/documents/${file.id}/download`;
 
       if (Platform.OS === 'web') {
-        // --- WEB SOLUTION (This part is correct and unchanged) ---
         const response = await fetch(remoteUrl, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -198,19 +257,14 @@ const UploadScreen: React.FC = () => {
         WebBrowser.openBrowserAsync(fileUrl);
 
       } else {
-        // --- NATIVE SOLUTION (Changed to use expo-sharing) ---
-        
-        // 1. Define a local path to save the file (this fix is still correct)
         const localUri = FileSystem.documentDirectory + '/' + encodeURIComponent(file.fileName);
 
-        // 2. Download the file
         const { uri } = await FileSystem.downloadAsync(remoteUrl, localUri, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
 
-        // 3. Use expo-sharing to open the file
         if (await Sharing.isAvailableAsync()) {
           await Sharing.shareAsync(uri);
         } else {
@@ -225,14 +279,12 @@ const UploadScreen: React.FC = () => {
       setIsViewing(false);
     }
   };
-  // ------------------------------------
-  // ------------------------------------
 
   const renderCategory = ({ item }: { item: (typeof categories)[0] }) => (
     <TouchableOpacity
       style={styles.categoryCard}
       onPress={() => handlePick(item.name)}
-      disabled={uploading || isViewing} // --- MODIFIED ---
+      disabled={uploading || isViewing}
       activeOpacity={0.7}
     >
       <View style={styles.iconContainer}>{item.icon}</View>
@@ -240,7 +292,6 @@ const UploadScreen: React.FC = () => {
     </TouchableOpacity>
   );
 
-  // --- MODIFIED: renderFile is now a TouchableOpacity ---
   const renderFile = ({ item }: { item: FileItem }) => (
     <TouchableOpacity 
       onPress={() => handleViewFile(item)} 
@@ -258,7 +309,7 @@ const UploadScreen: React.FC = () => {
             </View>
             <TouchableOpacity
               style={styles.deleteButton}
-              onPress={() => handleRemoveFile(item.id)} // Pass the database ID
+              onPress={() => handleRemoveFile(item.id)}
             >
               <MaterialIcons name="close" size={20} color="#d32f2f" />
             </TouchableOpacity>
@@ -267,15 +318,13 @@ const UploadScreen: React.FC = () => {
       </Card>
     </TouchableOpacity>
   );
-  // ------------------------------------------------------
 
   return (
     <View style={styles.container}>
-    <SafeAreaView>
-      <Text style={styles.header}>Upload Documents</Text>
+      <SafeAreaView>
+        <Text style={styles.header}>Upload Documents</Text>
       </SafeAreaView>
 
-      {/* --- NEW: Added loading indicator for viewing --- */}
       {(uploading || isViewing) && (
         <View style={styles.uploadingIndicator}>
           <ActivityIndicator size="small" color="#63b0a3" />
@@ -286,9 +335,8 @@ const UploadScreen: React.FC = () => {
       )}
 
       <FlatList
-        // ... (FlatList props unchanged) ...
         data={categories}
-        keyExtractor={(item: { id: any; }) => item.id}
+        keyExtractor={(item) => item.id}
         renderItem={renderCategory}
         numColumns={2}
         columnWrapperStyle={styles.row}
@@ -308,8 +356,8 @@ const UploadScreen: React.FC = () => {
       ) : (
         <FlatList
           data={uploadedFiles}
-          keyExtractor={(item: { id: any; }) => item.id}
-          renderItem={renderFile} // --- MODIFIED (will use new renderFile) ---
+          keyExtractor={(item) => item.id}
+          renderItem={renderFile}
           contentContainerStyle={styles.fileList}
         />
       )}
@@ -319,7 +367,6 @@ const UploadScreen: React.FC = () => {
 
 export default UploadScreen;
 
-// --- STYLES (No changes, but included for completeness) ---
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -436,7 +483,3 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
   },
 });
-
-function setUploading(arg0: boolean) {
-  throw new Error("Function not implemented.");
-}

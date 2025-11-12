@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import api from '../../backend/node_server/services/api'; // Your axios instance
+import api from '../services/api'; // Your axios instance
 
 // --- NEW IMPORT ---
 import DateTimePickerModal from "react-native-modal-datetime-picker";
