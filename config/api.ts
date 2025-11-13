@@ -5,8 +5,8 @@
 export const PYTHON_API_URL = process.env.NODE_ENV === 'production'
   ? 'https://mediapp-python.herokuapp.com' // Replace with your deployed Python backend URL
   : 'http://localhost:8000'; // Local development
-export const API_URL = 
-  'https://mediapp-8crb.onrender.com'; // Replace with deployed URL
-  //: 'http://192.168.1.2:3000'; // Local development
+export const API_URL = process.env.NODE_ENV === 'production'
+  ? 'https://your-backend-url.com' // Replace with deployed URL
+  : 'http://192.168.1.3:3000'; // Local development
 
 

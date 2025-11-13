@@ -1,6 +1,8 @@
+import { API_URL } from '@/config/api';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
+import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -17,8 +19,6 @@ import {
     View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router'; 
-import { API_URL } from '@/config/api';
 
 // --- Configuration ---
 // 🚨 CRITICAL: Replace "http://YOUR_LOCAL_IP:3000/api" with your server's actual IPv4 address!

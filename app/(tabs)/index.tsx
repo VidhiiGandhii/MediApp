@@ -14,9 +14,10 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuth } from "../contexts/AuthContext";
 import api from "../services/api";
-
 const { width } = Dimensions.get("window");
+
 
 interface UserData {
   name: string;
@@ -52,7 +53,7 @@ export default function HomeScreen() {
 
   const [nextMedicine, setNextMedicine] = useState<Medication | null>(null);
   const [isLoadingMedicine, setIsLoadingMedicine] = useState(true);
-
+  const { userId } = useAuth();
   useEffect(() => {
     const loadUserData = async () => {
       try {
@@ -85,14 +86,15 @@ export default function HomeScreen() {
   const fetchUpcomingAppointment = async () => {
     setIsLoadingAppointment(true);
     try {
+      const response = await api.get("/appointments");
+      const allAppointments: Appointment[] = response.data.appointments || [];
+
       const token = await AsyncStorage.getItem("userToken");
+
       if (!token) {
         setIsLoadingAppointment(false);
         return;
       }
-
-      const response = await api.get("/appointments");
-      const allAppointments: Appointment[] = response.data.appointments || [];
 
       const nextAppointment = allAppointments
         .filter((a) => a.status === "upcoming")
@@ -118,8 +120,8 @@ export default function HomeScreen() {
   const fetchNextMedicine = async () => {
     setIsLoadingMedicine(true);
     try {
-      const userDataString = await AsyncStorage.getItem("userData");
-      const userId = userDataString ? JSON.parse(userDataString).id : null;
+      // const userDataString = await AsyncStorage.getItem("userData");
+      // const userId = userDataString ? JSON.parse(userDataString).id : null;
 
       if (!userId) {
         setNextMedicine(null);
@@ -322,9 +324,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#F9FAFB",
     borderTopLeftRadius: 25,
     borderTopRightRadius: 25,
-    marginTop: -10,
+    marginTop: -1,/
     minHeight: Dimensions.get("window").height,
-  },
+},
   header: { flexDirection: "row", alignItems: "center", padding: 20 },
   avatar: { width: 48, height: 48, borderRadius: 24 },
   welcome: { fontSize: 14, color: "#666" },
@@ -332,75 +334,75 @@ const styles = StyleSheet.create({
   headerIcons: { flexDirection: "row", gap: 10 },
   iconButton: { marginLeft: 12 },
   quickActions: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    marginBottom: 20,
-  },
+  flexDirection: "row",
+  alignItems: "center",
+  paddingHorizontal: 20,
+  marginBottom: 20,
+},
   searchBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-    backgroundColor: "#EEE",
-    padding: Platform.OS === "ios" ? 12 : 8,
-    borderRadius: 12,
-    marginLeft: 10,
-  },
+  flexDirection: "row",
+  alignItems: "center",
+  flex: 1,
+  backgroundColor: "#EEE",
+  padding: Platform.OS === "ios" ? 12 : 8,
+  borderRadius: 12,
+  marginLeft: 10,
+},
   searchText: { marginLeft: 6, color: "#666" },
   section: { paddingHorizontal: 20, marginBottom: 20 },
   sectionTitle: { fontSize: 18, fontWeight: "700", marginBottom: 12, color: "#333" },
   cardGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    gap: 12,
-  },
+  flexDirection: "row",
+  flexWrap: "wrap",
+  justifyContent: "space-between",
+  gap: 12,
+},
   card: {
-    width: (width - 60) / 2,
-    backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-  },
+  width: (width - 60) / 2,
+  backgroundColor: "#fff",
+  padding: 15,
+  borderRadius: 16,
+  alignItems: "center",
+  justifyContent: "center",
+  elevation: 2,
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.05,
+  shadowRadius: 8,
+},
   cardLabel: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#333",
-    textAlign: "center",
-    marginTop: 10,
-  },
+  fontSize: 14,
+  fontWeight: "600",
+  color: "#333",
+  textAlign: "center",
+  marginTop: 10,
+},
   appointmentCard: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 15,
-    marginTop: 15,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-  },
+  flexDirection: "row",
+  alignItems: "flex-start",
+  backgroundColor: "#fff",
+  borderRadius: 16,
+  padding: 15,
+  marginTop: 15,
+  elevation: 2,
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.05,
+  shadowRadius: 8,
+},
   appointmentTime: { fontSize: 14, fontWeight: "600", color: "#4A90E2" },
   appointmentTitle: { fontSize: 16, fontWeight: "700", color: "#333" },
   appointmentDetails: { fontSize: 13, color: "#666", marginTop: 4 },
   fab: {
-    position: "absolute",
-    width: 60,
-    height: 60,
-    alignItems: "center",
-    justifyContent: "center",
-    right: 30,
-    bottom: 30,
-    backgroundColor: "#63b0a3",
-    borderRadius: 30,
-    elevation: 8,
-  },
+  position: "absolute",
+  width: 60,
+  height: 60,
+  alignItems: "center",
+  justifyContent: "center",
+  right: 30,
+  bottom: 30,
+  backgroundColor: "#63b0a3",
+  borderRadius: 30,
+  elevation: 8,
+},
 });
