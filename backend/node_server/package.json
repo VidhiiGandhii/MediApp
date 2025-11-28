@@ -14,12 +14,13 @@
     "csv-parser": "^3.2.0",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
+    "form-data": "^4.0.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.19.1",
     "multer": "^2.0.2",
     "node-fetch": "^3.3.2",
     "node-summarizer": "^1.0.7",
     "tesseract.js": "^6.0.1",
-    "form-data": "^4.0.0"
+    "uuid": "^13.0.0"
   }
 }
