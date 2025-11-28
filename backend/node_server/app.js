@@ -24,10 +24,27 @@ app.use('/api', allRoutes);
 // HEALTH CHECK & ERROR HANDLERS
 // ============================================
 app.get('/', (req, res) => {
+  // Debug route to list all registered routes
+  const routes = [];
+  app._router.stack.forEach((middleware) => {
+    if (middleware.route) {
+      // Routes registered directly on the app
+      routes.push(`${Object.keys(middleware.route.methods).join(', ').toUpperCase()} ${middleware.route.path}`);
+    } else if (middleware.name === 'router') {
+      // Routes registered on routers
+      middleware.handle.stack.forEach((handler) => {
+        if (handler.route) {
+          routes.push(`${Object.keys(handler.route.methods).join(', ').toUpperCase()} ${handler.route.path}`);
+        }
+      });
+    }
+  });
+
   res.json({
     message: 'MediApp Backend API',
     status: 'running',
-    version: '1.0.0'
+    version: '1.0.0',
+    routes: routes.sort()
   });
 });
 

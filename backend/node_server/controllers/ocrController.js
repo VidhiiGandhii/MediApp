@@ -57,14 +57,14 @@ const uploadWithOCR = async (req, res) => {
         if (req.file.mimetype === 'application/pdf' || req.file.originalname.toLowerCase().endsWith('.pdf')) {
           // Call Python PDF extractor
           const form = new FormData();
-          
+
           // Create a Blob-like object for fetch FormData (if using native FormData)
           if (typeof form.append === 'function' && FormDataImpl === global.FormData) {
             // Native FormData - convert buffer to Blob
             const blob = new Blob([req.file.buffer], { type: req.file.mimetype });
             form.append('file', blob, req.file.originalname);
-            const ocrResp = await fetchFn(`${OCR_SERVICE_URL}/ocr`, { 
-              method: 'POST', 
+            const ocrResp = await fetchFn(`${OCR_SERVICE_URL}/ocr`, {
+              method: 'POST',
               body: form
             });
             if (ocrResp.ok) {
@@ -79,8 +79,8 @@ const uploadWithOCR = async (req, res) => {
           } else {
             // form-data library (Node 18.0-18.9 or older)
             form.append('file', req.file.buffer, { filename: req.file.originalname, contentType: req.file.mimetype });
-            const ocrResp = await fetchFn(`${OCR_SERVICE_URL}/ocr`, { 
-              method: 'POST', 
+            const ocrResp = await fetchFn(`${OCR_SERVICE_URL}/ocr`, {
+              method: 'POST',
               body: form,
               headers: form.getHeaders()
             });
@@ -190,6 +190,74 @@ const uploadWithOCR = async (req, res) => {
   }
 };
 
+/**
+ * Delete a document and its associated chat messages and files
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+const deleteDocument = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+    const filesBucket = getBucket();
+
+    // 1. Find the document and verify ownership
+    const document = await Document.findOne({ _id: id, userId });
+    if (!document) {
+      return res.status(404).json({
+        success: false,
+        message: 'Document not found or access denied'
+      });
+    }
+
+    // 2. Find and delete associated chat messages and their audio files
+    const chatMessages = await ChatMessage.find({ documentId: document._id });
+
+    // Delete all audio files associated with these chat messages
+    await Promise.all(chatMessages.map(async (chat) => {
+      if (chat.audioFileId) {
+        try {
+          await filesBucket.delete(chat.audioFileId);
+          console.log(`Deleted audio file: ${chat.audioFileId}`);
+        } catch (err) {
+          console.error(`Error deleting audio file ${chat.audioFileId}:`, err);
+          // Continue even if audio deletion fails
+        }
+      }
+    }));
+
+    // 3. Delete the chat messages
+    await ChatMessage.deleteMany({ documentId: document._id });
+
+    // 4. Delete the document file from GridFS
+    if (document.fileId) {
+      try {
+        await filesBucket.delete(document.fileId);
+        console.log(`Deleted document file: ${document.fileId}`);
+      } catch (err) {
+        console.error(`Error deleting document file ${document.fileId}:`, err);
+        // Continue even if file deletion fails
+      }
+    }
+
+    // 5. Delete the document record
+    await Document.findByIdAndDelete(document._id);
+
+    res.json({
+      success: true,
+      message: 'Document and all associated data deleted successfully'
+    });
+  } catch (err) {
+    console.error('Error deleting document:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete document',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+};
+
 module.exports = {
   uploadWithOCR,
+  deleteDocument
 };

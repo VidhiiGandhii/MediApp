@@ -116,7 +116,7 @@ const OCRChat: React.FC = () => {
       'Delete Message',
       'Are you sure you want to delete this message from chat history?',
       [
-        { text: 'Cancel', onPress: () => {}, style: 'cancel' },
+        { text: 'Cancel', style: 'cancel' },
         {
           text: 'Delete',
           onPress: async () => {
@@ -127,6 +127,8 @@ const OCRChat: React.FC = () => {
                 return;
               }
 
+              console.log(`Sending DELETE request to: ${API_URL}/api/chat/${chatId}`);
+
               const response = await fetch(`${API_URL}/api/chat/${chatId}`, {
                 method: 'DELETE',
                 headers: {
@@ -135,16 +137,26 @@ const OCRChat: React.FC = () => {
                 },
               });
 
+              const responseData = await response.json().catch(() => ({}));
+
+              console.log('Delete response status:', response.status);
+              console.log('Delete response data:', responseData);
+
               if (!response.ok) {
-                throw new Error('Failed to delete message');
+                throw new Error(responseData.message || 'Failed to delete message');
               }
 
-              // Remove from local state
-              setChatMessages((prev) => prev.filter((msg) => msg._id !== chatId));
-              Alert.alert('Success', 'Message deleted from chat history');
+              // Update local state
+              setChatMessages(prev => prev.filter(msg => msg._id !== chatId));
+              Alert.alert('Success', 'Message deleted successfully');
             } catch (error) {
-              console.error('Delete error:', error);
-              Alert.alert('Error', 'Failed to delete message');
+              const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+              console.error('Delete error details:', {
+                error,
+                message: errorMessage,
+                stack: error instanceof Error ? error.stack : undefined
+              });
+              Alert.alert('Error', errorMessage);
             }
           },
           style: 'destructive',
@@ -152,7 +164,6 @@ const OCRChat: React.FC = () => {
       ]
     );
   };
-
   const translateAndSpeak = async (text: string, chatId: string) => {
     try {
       Alert.alert('Translating & Speaking', 'Converting to Hindi speech...');
