@@ -17,5 +17,6 @@ module.exports = {
   JWT_SECRET: process.env.JWT_SECRET,
   PORT: process.env.PORT || 3000,
   PYTHON_API_URL: process.env.PYTHON_API_URL || 'http://localhost:8000',
+  OCR_SERVICE_URL: process.env.OCR_SERVICE_URL || 'https://ocr-service-h1eo.onrender.com',
   NODE_ENV: process.env.NODE_ENV || 'development'
 };
