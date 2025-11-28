@@ -6,17 +6,17 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { JSX, useCallback, useMemo, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { Calendar } from 'react-native-calendars'; // Import calendar
-import api from "../../services/api"; // Your axios instance
+import api from "../../../services/api"; // Your axios instance
 
 // --- UPDATED: Added new interface ---
 interface Medication {
@@ -228,11 +228,15 @@ export default function CalendarScreen() {
   const handleLogIntake = async (item: ScheduledDose) => {
     if (item.status !== 'pending') return;
     try {
-      await api.post('/medications/intake', {
+      const resp = await api.post('/medications/intake', {
         medicationId: item.medication._id,
         status: "taken",
+        scheduledTime: item.scheduledTime,
       });
       Alert.alert("Success", "Marked as taken");
+      if (resp?.data?.shouldRefill) {
+        Alert.alert("Low Stock", `Only ${resp.data.remainingStock} units left — consider refilling.`);
+      }
       loadData(); // Refresh all data
     } catch (error) {
       console.error("Error logging intake:", error);

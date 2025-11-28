@@ -88,9 +88,43 @@ const cancelAppointment = async (req, res) => {
   }
 };
 
+// @desc    Delete an appointment (only owner) - permanent remove
+// @route   DELETE /api/appointments/:id
+// @access  Private
+const deleteAppointment = async (req, res) => {
+  try {
+    const appointment = await Appointment.findOne({ _id: req.params.id, userId: req.user.id });
+    if (!appointment) {
+      return res.status(404).json({ success: false, message: 'Appointment not found' });
+    }
+    await Appointment.deleteOne({ _id: appointment._id });
+    console.log(`✅ Appointment ${req.params.id} deleted by user ${req.user.id}`);
+    res.json({ success: true, message: 'Appointment deleted' });
+  } catch (error) {
+    console.error('Error deleting appointment:', error);
+    res.status(500).json({ success: false, message: 'Failed to delete appointment' });
+  }
+};
+
+// @desc    Clear all cancelled appointments for the logged-in user
+// @route   DELETE /api/appointments/clear-cancelled
+// @access  Private
+const clearCancelledAppointments = async (req, res) => {
+  try {
+    const result = await Appointment.deleteMany({ userId: req.user.id, status: 'cancelled' });
+    console.log(`✅ Cleared ${result.deletedCount} cancelled appointments for user ${req.user.id}`);
+    res.json({ success: true, deletedCount: result.deletedCount });
+  } catch (error) {
+    console.error('Error clearing cancelled appointments:', error);
+    res.status(500).json({ success: false, message: 'Failed to clear cancelled appointments' });
+  }
+};
+
 // 5. Use 'module.exports' instead of 'export default'
 module.exports = {
   getUserAppointments,
   bookAppointment,
   cancelAppointment
+  , deleteAppointment,
+  clearCancelledAppointments
 };

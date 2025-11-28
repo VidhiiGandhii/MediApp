@@ -120,7 +120,7 @@ const deactivateUserMedication = async (req, res, next) => {
  */
 const recordMedicationIntake = async (req, res, next) => {
   try {
-    const { medicationId, status, notes } = req.body;
+    const { medicationId, status, notes, scheduledTime } = req.body;
 
     if (!medicationId || !status) {
       return res.status(400).json({ success: false, message: 'Medication ID and status required' });
@@ -138,7 +138,8 @@ const recordMedicationIntake = async (req, res, next) => {
     const history = new MedicationHistory({
       userId: req.user.id,
       medicationId,
-      scheduledTime: new Date(), // This should ideally come from the client
+      // Use scheduledTime from client when provided (ISO string), otherwise fall back to now
+      scheduledTime: scheduledTime ? new Date(scheduledTime) : new Date(),
       takenTime: status === 'taken' ? new Date() : null,
       status,
       notes
@@ -153,10 +154,17 @@ const recordMedicationIntake = async (req, res, next) => {
         { $inc: { stock: -1 } },
         { new: true }
       );
+
+      // Determine if we should prompt for refill
+      const shouldRefill = typeof updated.refillThreshold === 'number'
+        ? updated.stock <= updated.refillThreshold
+        : updated.stock <= 7;
+
       return res.status(201).json({
         success: true,
         history,
-        remainingStock: updated.stock
+        remainingStock: updated.stock,
+        shouldRefill,
       });
     }
 

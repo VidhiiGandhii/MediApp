@@ -1,0 +1,9 @@
+fastapi==0.95.2
+uvicorn[standard]==0.22.0
+pillow
+pdfplumber
+gTTS
+python-multipart==0.0.6
+googletrans
+deep_translator 
+#uvicorn main:app --reload --port 8001

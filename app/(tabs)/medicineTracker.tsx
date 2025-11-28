@@ -4,19 +4,19 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Link, useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Dimensions,
-  Platform,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Dimensions,
+    Platform,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import api from "../services/api"; // Corrected path
+import api from "../../services/api"; // Corrected path
 
 const { width } = Dimensions.get("window");
 
@@ -85,7 +85,6 @@ export default function MedicineTracker() {
       // 1. Fetch today's schedule from the backend
       const response = await api.get(`/medications/today/${userId}`);
       const scheduleData: ScheduledDose[] = response.data.schedule || [];
-      setSchedule(scheduleData);
 
       // 2. Calculate progress from this data
       const completedCount = scheduleData.filter((m) => m.status === 'taken').length;
@@ -130,7 +129,7 @@ export default function MedicineTracker() {
     const newStatus = 'taken';
 
     try {
-      // 1. Optimistically update the UI
+      // 1. Optimistically update the UI to mark as taken
       setSchedule(prevSchedule =>
         prevSchedule.map(dose => 
           dose.medication._id === doseToLog.medication._id && dose.scheduledTime === doseToLog.scheduledTime
@@ -139,26 +138,31 @@ export default function MedicineTracker() {
         )
       );
 
-      // 2. Recalculate progress
-      const newCompletedCount = progressData.completed + 1;
-      const totalCount = progressData.total;
-      const newPercentage = totalCount > 0 ? (newCompletedCount / totalCount) * 100 : 0;
-      
-      setProgressData({
-        completed: newCompletedCount,
-        total: totalCount,
-        percentage: newPercentage,
-      });
-
-      // 3. Send to backend
-      await api.post("/medications/intake", {
+      // 2. Send to backend to record intake
+      const resp = await api.post("/medications/intake", {
         medicationId: doseToLog.medication._id,
         status: newStatus,
+        scheduledTime: doseToLog.scheduledTime,
+      });
+
+      // If backend signals low stock, prompt the user to refill
+      if (resp?.data?.shouldRefill) {
+        Alert.alert("Low Stock", `Only ${resp.data.remainingStock} units left — consider refilling.`);
+      }
+
+      // 3. On success, remove the dose from today's schedule UI and recompute progress
+      setSchedule(prev => {
+        const newSchedule = prev.filter(d => !(d.medication._id === doseToLog.medication._id && d.scheduledTime === doseToLog.scheduledTime));
+        const completedCount = newSchedule.filter(s => s.status === 'taken').length;
+        const totalCount = newSchedule.length;
+        const percentage = totalCount > 0 ? (completedCount / totalCount) * 100 : (completedCount > 0 ? 100 : 0);
+        setProgressData({ completed: completedCount, total: totalCount, percentage });
+        return newSchedule;
       });
 
     } catch (error) {
       console.error("Error logging intake:", error);
-      Alert.alert("Error", "Failed to log intake. Reverting.");
+      Alert.alert("Error", "Failed to log intake. Reloading data to revert.");
       // If backend fails, reload data to revert
       loadData();
     }

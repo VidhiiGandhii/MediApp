@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import api from '../services/api'; // Your axios instance
+import api from '../../services/api'; // Your axios instance
 
 // --- NEW IMPORT ---
 import DateTimePickerModal from "react-native-modal-datetime-picker";
@@ -27,6 +27,9 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 3,
   },
   headerTitle: { fontSize: 28, fontWeight: 'bold', color: CardColor, marginTop: 20 },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  clearButton: { backgroundColor: '#ffffff22', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
+  clearButtonText: { color: CardColor, fontWeight: '600' },
   sectionTitle: {
     fontSize: 20, fontWeight: '600', color: TextColor,
     paddingHorizontal: 20, marginBottom: 10,
@@ -297,6 +300,48 @@ export default function AppointmentScreen() {
     );
   };
 
+  // Delete appointment permanently
+  const handleDeleteAppointment = async (appointmentId: string) => {
+    Alert.alert("Confirm Delete", "This will permanently delete the appointment.", [
+      { text: "No", style: "cancel" },
+      {
+        text: "Yes, Delete",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await api.delete(`/appointments/${appointmentId}`);
+            Alert.alert("Deleted", "Appointment removed.");
+            fetchData();
+          } catch (error) {
+            console.error("Error deleting appointment:", error);
+            Alert.alert("Error", "Could not delete appointment.");
+          }
+        }
+      }
+    ]);
+  };
+
+  // Clear all cancelled appointments for the user
+  const handleClearCancelled = async () => {
+    Alert.alert("Clear Cancelled", "Remove all cancelled appointments?", [
+      { text: "No", style: "cancel" },
+      {
+        text: "Yes, Clear",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            const resp = await api.delete('/appointments/clear-cancelled');
+            Alert.alert("Cleared", `Removed ${resp.data.deletedCount || 0} cancelled appointments.`);
+            fetchData();
+          } catch (error) {
+            console.error("Error clearing cancelled appointments:", error);
+            Alert.alert("Error", "Could not clear cancelled appointments.");
+          }
+        }
+      }
+    ]);
+  };
+
   // --- RENDER FUNCTIONS ---
   // (renderUpcomingAppointments is unchanged)
   const renderUpcomingAppointments = () => { /* ... (paste your existing function here) ... */
@@ -308,11 +353,20 @@ export default function AppointmentScreen() {
       });
     return (
       <View>
-        {sortedAppointments.length > 0 ? (
-          sortedAppointments.map((app) => (
-            <AppointmentCard key={app._id} appointment={app} onCancel={handleCancelAppointment} />
-          ))
-        ) : ( <Text style={styles.emptyText}>No appointments yet!</Text> )}
+          {sortedAppointments.length > 0 ? (
+            sortedAppointments.map((app) => (
+              <View key={app._id}>
+                <AppointmentCard appointment={app} onCancel={handleCancelAppointment} />
+                {app.status === 'cancelled' && (
+                  <View style={{ paddingHorizontal: 20, marginBottom: 10 }}>
+                    <TouchableOpacity style={[styles.button, { backgroundColor: '#9e9e9e' }]} onPress={() => handleDeleteAppointment(app._id)}>
+                      <Text style={styles.buttonText}>Delete Cancelled</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            ))
+          ) : ( <Text style={styles.emptyText}>No appointments yet!</Text> )}
       </View>
     );
   };
@@ -417,7 +471,16 @@ export default function AppointmentScreen() {
   return (
     <View style={styles.container}>
       {/* ... (Header and Tab Bar JSX are unchanged) ... */}
-      <View style={styles.header}><Text style={styles.headerTitle}>Appointments</Text></View>
+      <View style={styles.header}>
+        <View style={styles.headerRow}>
+          <Text style={styles.headerTitle}>Appointments</Text>
+          {appointments.some(a => a.status === 'cancelled') && (
+            <TouchableOpacity style={styles.clearButton} onPress={handleClearCancelled}>
+              <Text style={styles.clearButtonText}>Clear Cancelled</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
       <View style={styles.tabBar}>
         <TouchableOpacity
           style={[styles.tabButton, activeTab === 'view' && styles.activeTab]}

@@ -11,6 +11,8 @@ const medicineRoutes = require('./medicineRoutes');
 const userMedicationRoutes = require('./userMedicationRoutes');
 const doctorRoutes = require('./doctorRoutes');
 const appointmentRoutes = require('./appointmentRoutes');
+const chatRoutes = require('./chatRoutes');
+const ttsRoutes = require('./ttsRoutes');
 
 // Mount all routes onto the main router
 router.use(authRoutes);
@@ -21,20 +23,7 @@ router.use(medicineRoutes);
 router.use(userMedicationRoutes);
 router.use(doctorRoutes);
 router.use(appointmentRoutes);
-
-// NO authenticateToken middleware should be here
-
-// Mount all routes onto the main router with their resource prefixes.
-// CRITICAL: The string argument specifies the base path for each router.
-// The final URL structure for appointments is: /api + /appointments
-router.use( authRoutes);
-router.use( documentRoutes);
-router.use( healthRoutes);
-router.use( inventoryRoutes);
-router.use( medicineRoutes);
-router.use( userMedicationRoutes);
-router.use( appointmentRoutes); // FIX: /appointments prefix add
-router.use(doctorRoutes);
-
+router.use(chatRoutes);
+router.use('/tts', ttsRoutes); // TTS routes with /tts prefix
 
 module.exports = router;

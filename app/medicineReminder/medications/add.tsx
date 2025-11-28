@@ -6,21 +6,21 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Dimensions,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    ActivityIndicator,
+    Alert,
+    Dimensions,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Switch,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from "react-native";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
-import api from "../../services/api"; // Your axios instance
-import { NotificationService } from '../../services/notificationService';
+import api from "../../../services/api"; // Your axios instance
+import { NotificationService } from '../../../services/notificationService';
 
 const { width } = Dimensions.get("window");
 

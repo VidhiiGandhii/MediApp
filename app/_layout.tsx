@@ -26,10 +26,8 @@
 // }
 import { Stack } from 'expo-router';
 import { useEffect } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { AuthProvider } from './contexts/AuthContext';
-import { NotificationService } from './services/notificationService';
-import * as Notifications from 'expo-notifications';
+import { AuthProvider } from '../contexts/AuthContext';
+import { NotificationService } from '../services/notificationService';
 
 export default function RootLayout() {
   useEffect(() => {

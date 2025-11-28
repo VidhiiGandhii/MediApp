@@ -10,6 +10,9 @@ const documentSchema = new mongoose.Schema({
   category: { type: String, enum: ['Prescription', 'Report', 'Bill', 'Other'] },
   description: { type: String },
   uploadedAt: { type: Date, default: Date.now },
+  // Optional OCR results (populated when OCR is run)
+  ocrText: { type: String },
+  ocrSummary: { type: String },
 });
 
 const Document = mongoose.model('Document', documentSchema);

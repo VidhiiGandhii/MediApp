@@ -1,5 +1,5 @@
+import { secureStorageHelper } from '@/utils/secureStorage';
 import { Ionicons } from '@expo/vector-icons';
-import * as SecureStore from 'expo-secure-store';
 import React, { useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -52,7 +52,7 @@ const ChangePasswordScreen = () => {
         // and call POST /api/user/change-password with the token, oldPassword, and newPassword.
 
         try {
-            const token = await SecureStore.getItemAsync('userToken');
+            const token = await secureStorageHelper.getItem('userToken');
             if (!token) throw new Error('Authentication required.');
 
             // --- MOCK API CALL START ---

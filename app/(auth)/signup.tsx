@@ -1,20 +1,20 @@
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 // ... (other imports)
-import { API_URL } from "../../config/api";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuth } from '../contexts/AuthContext';
 import MaterialCommunityIcons from "@expo/vector-icons/build/MaterialCommunityIcons";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { API_URL } from "../../config/api";
+import { useAuth } from '../../contexts/AuthContext';
 
 // ... (TabletButton component is unchanged)
 

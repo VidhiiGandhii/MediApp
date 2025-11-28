@@ -25,12 +25,8 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-<<<<<<< HEAD
-      "package": "com.project.HealthApp"
-=======
       "package": "com.vidhigandhi.HealthApp",
       "runtimeVersion": "1.0.0"
->>>>>>> c8a82214f9a2e864f01db1d5c664a5c748bfc08e
     },
     "web": {
       "bundler": "metro",
@@ -64,16 +60,11 @@
     "extra": {
       "router": {},
       "eas": {
-<<<<<<< HEAD
-        "projectId": "f8199e6a-76ca-4859-81e7-25e8db8ca773"
-      }
-=======
         "projectId": "0864d0a3-372f-4c7e-b987-9a20865fcbaf"
       }
     },
     "updates": {
       "url": "https://u.expo.dev/0864d0a3-372f-4c7e-b987-9a20865fcbaf"
->>>>>>> c8a82214f9a2e864f01db1d5c664a5c748bfc08e
     }
   }
 }

@@ -1,9 +1,9 @@
 import { API_URL } from '@/config/api';
+import { secureStorageHelper } from '@/utils/secureStorage';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import * as SecureStore from 'expo-secure-store';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
     ActivityIndicator,
@@ -116,7 +116,7 @@ const ProfileScreen = () => {
     const loadUserData = useCallback(async () => {
         try {
             const userDataJson = await AsyncStorage.getItem('userData');
-            const token = await SecureStore.getItemAsync('userToken');
+            const token = await secureStorageHelper.getItem('userToken');
 
             if (userDataJson && token) {
                 const data = JSON.parse(userDataJson);
@@ -182,7 +182,7 @@ const ProfileScreen = () => {
         if (isSaving || !user) return;
         
         setIsSaving(true);
-        const token = await SecureStore.getItemAsync('userToken');
+        const token = await secureStorageHelper.getItem('userToken');
 
         // Data to send to the server (only send fields that can be updated)
         const updatePayload = {

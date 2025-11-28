@@ -22,6 +22,10 @@ router.use(authenticateToken);
  */
 router.post('/upload', upload.single('file'), uploadDocument);
 
+// Upload and run OCR via external Python OCR microservice
+const { uploadWithOCR } = require('../controllers/ocrController');
+router.post('/upload-with-ocr', upload.single('file'), uploadWithOCR);
+
 /**
  * @route   GET /api/documents
  * @desc    Get all documents for the logged-in user

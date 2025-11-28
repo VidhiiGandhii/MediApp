@@ -2,23 +2,23 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { useSharedValue } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import FallingTablets from "../../components/FallingTablets";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../../contexts/AuthContext";
 
 // 🚨 CRITICAL: REPLACE THIS WITH YOUR COMPUTER'S ACTUAL LOCAL IPV4 ADDRESS AND PORT 3000
 // Example: http://192.168.1.5:3000
-import { API_URL } from "../../config/api"; 
+import { API_URL } from "../../config/api";
 
 type TabletButtonProps = {
     onPress: () => void;

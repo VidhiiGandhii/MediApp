@@ -15,7 +15,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import api from "../../services/api"; // Your axios instance
+import api from "../../../services/api"; // Your axios instance
 
 // This matches your backend schema (with populated medicationId)
 interface HistoryItem {

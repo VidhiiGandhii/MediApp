@@ -1,8 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { secureStorageHelper } from './secureStorage';
 
 export const storeToken = async (token: string) => {
   try {
-    await AsyncStorage.setItem('userToken', token);
+    await secureStorageHelper.setItem('userToken', token);
   } catch (error) {
     console.error('Error storing token:', error);
   }
@@ -10,7 +11,7 @@ export const storeToken = async (token: string) => {
 
 export const getToken = async () => {
   try {
-    return await AsyncStorage.getItem('userToken');
+    return await secureStorageHelper.getItem('userToken');
   } catch (error) {
     console.error('Error getting token:', error);
     return null;
@@ -19,7 +20,7 @@ export const getToken = async () => {
 
 export const removeToken = async () => {
   try {
-    await AsyncStorage.removeItem('userToken');
+    await secureStorageHelper.removeItem('userToken');
   } catch (error) {
     console.error('Error removing token:', error);
   }

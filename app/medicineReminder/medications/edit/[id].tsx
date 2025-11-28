@@ -5,20 +5,20 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router"; // <-- Import useLocalSearchParams
 import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Dimensions,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Dimensions,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Switch,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
-import api from "../../../services/api"; // Your axios instance
+import api from "../../../../services/api"; // Your axios instance
 
 const { width } = Dimensions.get("window");
 

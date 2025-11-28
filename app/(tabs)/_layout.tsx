@@ -2,7 +2,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { Tabs, useRouter } from "expo-router";
 import { useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function TabsLayout() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -76,7 +76,19 @@ export default function TabsLayout() {
           }}
         />
 
-       
+        <Tabs.Screen
+          name="ocrChat"
+          options={{
+            title: "OCR Chat",
+            tabBarIcon: ({ color, focused }) => (
+              <Ionicons
+                name={focused ? "chatbubble" : "chatbubble-outline"}
+                size={26}
+                color={color}
+              />
+            ),
+          }}
+        />
 
         <Tabs.Screen
           name="Settings"
