@@ -2,6 +2,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
+    ActivityIndicator,
     Alert,
     KeyboardAvoidingView,
     Platform,
@@ -34,10 +35,11 @@ const TabletButton: React.FC<TabletButtonProps> = ({ onPress, text }) => (
 
 export default function LoginScreen() {
     const router = useRouter();
-    // FIX: Correctly destructuring the 'login' function from AuthContext
-    const { login } = useAuth(); 
+    const { login } = useAuth();
     const [email, setEmail] = useState<string>("");
     const [password, setPassword] = useState<string>("");
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [isTestingConnection, setIsTestingConnection] = useState<boolean>(false);
 
     // Animation states
     const fallRate = useSharedValue<number>(2);
@@ -48,37 +50,52 @@ export default function LoginScreen() {
     };
 
     const handleSubmit = async (): Promise<void> => {
+        console.log("🚀 Login submitted");
         if (!email || !password) {
             Alert.alert("Error", "Please enter both email/username and password.");
             return;
         }
 
+        setIsLoading(true);
+
         try {
-            // 1. Attempt connection to the backend
+            console.log("📡 Sending login request to:", `${API_URL}/api/login`);
             const response = await fetch(`${API_URL}/api/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email, password }),
             });
 
-            const data = await response.json();
+            console.log("📥 Response status:", response.status);
+            const responseText = await response.text();
+            console.log("📝 Raw response:", responseText);
+
+            let data;
+            try {
+                data = JSON.parse(responseText);
+            } catch (e) {
+                console.error("❌ Failed to parse JSON:", e);
+                Alert.alert("Server Error", "The server returned an invalid response format.");
+                return;
+            }
 
             if (response.ok && data.success) {
-                // 2. On success, use the context function to save token and user data
-                await login(data.token, data.user); 
-                
+                console.log("✅ Login successful!");
+                await login(data.token, data.user);
+
                 clearTrigger.value = true;
                 setTimeout(() => {
-                    // 3. Navigate to the main application tabs
                     router.replace("/(tabs)");
                 }, 800);
             } else {
+                console.warn("⚠️ Login failed:", data.message);
                 Alert.alert("Login Failed", data.message || "An unknown error occurred.");
             }
         } catch (error: any) {
-            console.error("Login failed:", error);
-            // Updated error message to guide user to the API_URL fix
-            Alert.alert("Connection Error", `Could not connect to the server. Check your API_URL configuration and network connection.`);
+            console.error("🚨 Login error:", error);
+            Alert.alert("Connection Error", `Could not connect to the server at ${API_URL}. Details: ${error.message}`);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -118,7 +135,62 @@ export default function LoginScreen() {
                         value={password}
                     />
 
-                    <TabletButton text="Login" onPress={handleSubmit} />
+                    <TouchableOpacity
+                        style={[styles.button, { backgroundColor: '#555', marginBottom: 10 }, (isTestingConnection || isLoading) && { opacity: 0.7 }]}
+                        disabled={isTestingConnection || isLoading}
+                        onPress={async () => {
+                            const testUrl = `${API_URL}/api/ping`;
+                            setIsTestingConnection(true);
+                            Alert.alert("Diagnostic Start", `Testing reachability to:\n${testUrl}`);
+                            try {
+                                const controller = new AbortController();
+                                const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+                                const start = Date.now();
+                                const res = await fetch(testUrl, {
+                                    method: 'GET',
+                                    signal: controller.signal
+                                });
+                                clearTimeout(timeoutId);
+
+                                const duration = Date.now() - start;
+                                const data = await res.json();
+                                Alert.alert("Success!", `✅ Connected to Backend!\n\nTime: ${duration}ms\nResponse: ${data.message}\nStatus: ${res.status}`);
+                            } catch (err: any) {
+                                let detail = err.message;
+                                if (err.name === 'AbortError') detail = "Connection timed out (5s).";
+
+                                Alert.alert("Network Failure",
+                                    `❌ Cannot reach server.\n\nError: ${detail}\n\nTroubleshoot:\n1. Server running on port 8000?\n2. Port 8000 allowed in Firewall?\n3. Same Wi-Fi?`);
+                            } finally {
+                                setIsTestingConnection(false);
+                            }
+                        }}
+                    >
+                        {isTestingConnection ? (
+                            <ActivityIndicator color="#fff" />
+                        ) : (
+                            <>
+                                <MaterialCommunityIcons name="wifi-check" size={24} color="#fff" style={{ marginRight: 10 }} />
+                                <Text style={styles.buttonText}>Check Server Connection</Text>
+                            </>
+                        )}
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.button, isLoading && { opacity: 0.7 }]}
+                        disabled={isLoading || isTestingConnection}
+                        onPress={handleSubmit}
+                    >
+                        {isLoading ? (
+                            <ActivityIndicator color="#fff" />
+                        ) : (
+                            <>
+                                <MaterialCommunityIcons name="pill" size={24} color="#fff" style={{ marginRight: 10 }} />
+                                <Text style={styles.buttonText}>Login</Text>
+                            </>
+                        )}
+                    </TouchableOpacity>
 
                     <TouchableOpacity onPress={() => router.push("/(auth)/signup")}>
                         <Text style={styles.link}>Don't have an account? Sign up</Text>

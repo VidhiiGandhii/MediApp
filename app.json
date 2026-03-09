@@ -12,6 +12,14 @@
       "supportsTablet": true,
       "infoPlist": {
         "NSAllowsLocalNetworking": true,
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        },
+        "NSLocalNetworkUsageDescription": "This app needs to connect to the local medical server to sync your data.",
+        "NSBonjourServices": [
+          "_http._tcp.",
+          "_tcp."
+        ],
         "ITSAppUsesNonExemptEncryption": false
       },
       "bundleIdentifier": "MediHealthApp",
@@ -34,9 +42,7 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-
       "expo-router",
-      
       [
         "expo-splash-screen",
         {
